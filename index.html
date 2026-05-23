@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Headshot Prompt Builder | Professional AI Photography Prompts</title>
+  <meta name="description" content="Configure parameters and generate optimized AI image prompts for realistic professional headshots. Works with Midjourney, Leonardo AI, Adobe Firefly, DALL-E 3 & Stable Diffusion." />
+
+  <!-- PWA meta -->
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="HeadshotAI" />
+
+  <!-- Favicon + icons (hrefs set inline via JS to a blue camera data URI) -->
+  <link rel="icon" id="favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📷</text></svg>" />
+  <link rel="apple-touch-icon" id="apple-icon" />
+  <link rel="manifest" id="manifest-link" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ---------- Light theme tokens ---------- */
+    :root {
+      --bg: #f8f8f6;
+      --card: #ffffff;
+      --card-border: #e8e8e4;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #eff6ff;
+      --text: #111111;
+      --text-secondary: #555555;
+      --text-muted: #999999;
+      --input-bg: #f4f4f2;
+      --divider: #eeeeea;
+      --success: #16a34a;
+      --danger: #dc2626;
+    }
+
+    html, body { font-family: 'Inter', system-ui, sans-serif; color: var(--text); }
+    /* Subtle dot grid only on the outermost page background */
+    body {
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, #d0d0cc 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .font-mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+    /* ---------- Thin light scrollbar ---------- */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f0f0ed; }
+    ::-webkit-scrollbar-thumb { background: #cccccc; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #aaaaaa; }
+    * { scrollbar-width: thin; scrollbar-color: #cccccc #f0f0ed; }
+
+    /* ---------- Smooth transitions ---------- */
+    .chip, .swatch, .preset-pill, button, .card-header, .card { transition: all 150ms ease; }
+
+    /* ---------- Cards / surfaces ---------- */
+    .card, .surface {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    .card { overflow: hidden; }
+    .card-header {
+      background: #f9f9f7;
+      border-bottom: 1px solid var(--divider);
+    }
+    .card.collapsed .card-header { border-bottom-color: transparent; }
+    .card-icon { color: var(--text-secondary); }
+
+    /* ---------- Chips ---------- */
+    .chip {
+      background: var(--input-bg);
+      border: 1px solid #e0e0dc;
+      color: #444444;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      min-height: 36px;
+      cursor: pointer;
+      user-select: none;
+      line-height: 1.1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chip:hover { background: var(--accent-light); border-color: #93c5fd; color: var(--accent); }
+    .chip.selected {
+      background: var(--accent-light);
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .chip.deselecting { animation: rippleFade 250ms ease forwards; }
+    @keyframes rippleFade {
+      0% { transform: scale(1.04); opacity: 1; }
+      50% { transform: scale(0.92); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ---------- Color swatches ---------- */
+    .swatch {
+      width: 32px; height: 32px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
+      position: relative;
+    }
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.selected {
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--accent);
+      transform: scale(1.1);
+    }
+
+    /* ---------- Collapsible card body ---------- */
+    .card-body {
+      overflow: hidden;
+      max-height: 1500px;
+      opacity: 1;
+      transition: max-height 300ms ease, opacity 200ms ease, padding 300ms ease;
+    }
+    .card.collapsed .card-body { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+    .card.collapsed .chevron { transform: rotate(-90deg); }
+    .chevron, .tip-chevron { transition: transform 300ms ease; }
+
+    /* ---------- Preset flash pulse (blue) ---------- */
+    .card.flash { animation: bluePulse 700ms ease; }
+    @keyframes bluePulse {
+      0%   { box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0 rgba(37,99,235,0); }
+      40%  { box-shadow: 0 0 0 3px rgba(37,99,235,0.30); }
+      100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0 rgba(37,99,235,0); }
+    }
+
+    /* ---------- Prompt box fade + meter ---------- */
+    .prompt-fade { transition: opacity 200ms ease; }
+    .meter-fill { transition: width 400ms ease; }
+
+    /* ---------- Preset pills ---------- */
+    .preset-pill {
+      background: var(--input-bg);
+      border: 1px solid #e0e0dc;
+      color: var(--text-secondary);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      min-height: 36px;
+    }
+    .preset-pill:hover { background: var(--accent-light); border-color: #93c5fd; color: var(--accent); }
+    .preset-pill.active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+
+    /* hide horizontal scrollbar visually but keep scroll */
+    .no-scrollbar::-webkit-scrollbar { height: 0; }
+    .no-scrollbar { scrollbar-width: none; }
+
+    .fade-in { animation: fadeIn 250ms ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Focus ring for the preset-name input */
+    .input-focus:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+    /* ---------- Install banner ---------- */
+    #installBanner {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 9999;
+      transform: translateY(130%);
+      transition: transform 400ms ease;
+      padding: 0;
+    }
+    #installBanner.show { transform: translateY(0); }
+    .install-card {
+      background: #ffffff;
+      border: 1px solid #e0e0dc;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
+      border-radius: 16px 16px 0 0;
+      padding: 20px 24px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    @media (min-width: 640px) {
+      #installBanner { padding: 0 16px 24px; }
+      .install-card { border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.14); }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+  <!-- ============ HEADER ============ -->
+  <header class="border-b border-[#e8e8e4] bg-white sticky top-0 z-30">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <!-- Camera aperture SVG in light accent square -->
+        <div class="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 3 L12 12 L19.5 16"></path>
+            <path d="M12 12 L4.5 16"></path>
+            <path d="M12 12 L19.5 8"></path>
+            <path d="M12 12 L4.5 8"></path>
+            <path d="M12 12 L12 21"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold leading-tight text-[#111111]">AI Headshot Prompt Builder</h1>
+          <p class="text-[12px] sm:text-[13px] text-[#777777] leading-tight">Generate perfect AI prompts for professional headshots</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="installedBadge" class="hidden text-[11px] font-semibold text-[#16a34a] bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-3 py-1.5">✓ App Installed</span>
+        <span class="text-[10px] sm:text-[11px] font-medium text-[#2563eb] bg-[#eff6ff] border border-[#bfdbfe] rounded-full px-3 py-1.5">
+          Works with Midjourney · Leonardo · Firefly · DALL-E
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ HOW TO USE TIP BAR ============ -->
+  <div id="tipBar" class="max-w-[1600px] mx-auto px-4 sm:px-6 mt-4">
+    <div class="bg-[#fffbeb] border border-[#fde68a] rounded-xl text-[#92400e]">
+      <div class="flex items-center justify-between px-4 py-2.5">
+        <button id="tipToggle" class="flex items-center gap-2 text-[13px] font-medium">
+          <span class="w-5 h-5 rounded-full bg-[#fde68a] flex items-center justify-center text-[12px] font-bold">?</span>
+          How to use this tool
+          <svg class="tip-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <button id="tipClose" class="text-[#92400e] hover:opacity-60 text-xl leading-none px-1" title="Dismiss tip">×</button>
+      </div>
+      <div id="tipSteps" class="hidden px-4 pb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="flex items-center gap-3 bg-white/60 border border-[#fde68a] rounded-lg px-3 py-2.5">
+            <span class="w-8 h-8 rounded-lg bg-[#fde68a] flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            </span>
+            <div><p class="text-[11px] font-bold uppercase tracking-wide">Step 1</p><p class="text-[12.5px]">Choose your parameters</p></div>
+          </div>
+          <div class="flex items-center gap-3 bg-white/60 border border-[#fde68a] rounded-lg px-3 py-2.5">
+            <span class="w-8 h-8 rounded-lg bg-[#fde68a] flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </span>
+            <div><p class="text-[11px] font-bold uppercase tracking-wide">Step 2</p><p class="text-[12.5px]">Watch your prompt build live</p></div>
+          </div>
+          <div class="flex items-center gap-3 bg-white/60 border border-[#fde68a] rounded-lg px-3 py-2.5">
+            <span class="w-8 h-8 rounded-lg bg-[#fde68a] flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </span>
+            <div><p class="text-[11px] font-bold uppercase tracking-wide">Step 3</p><p class="text-[12.5px]">Copy &amp; paste into your AI tool</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN SPLIT LAYOUT ============ -->
+  <main class="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6 items-start">
+
+    <!-- ===== LEFT PANEL (config) ===== -->
+    <section class="w-full lg:w-[60%] space-y-4" id="configPanel"></section>
+
+    <!-- ===== RIGHT PANEL (output) ===== -->
+    <aside class="w-full lg:w-[40%] lg:sticky lg:top-[84px] space-y-4">
+
+      <!-- Strength meter -->
+      <div class="surface p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-semibold text-[#111111]">Prompt Strength</span>
+          <span class="text-sm font-bold" id="strengthPct" style="color:#999999">Just Getting Started</span>
+        </div>
+        <div class="h-2.5 w-full bg-[#f0f0ed] rounded-full overflow-hidden">
+          <div class="meter-fill h-full bg-[#2563eb] rounded-full" id="strengthBar" style="width:0%"></div>
+        </div>
+        <p class="text-[11px] text-[#999999] mt-2" id="strengthCount">0 of 27 parameters configured · 0%</p>
+      </div>
+
+      <!-- Presets bar -->
+      <div class="surface p-4">
+        <p class="text-[11px] font-semibold uppercase tracking-wide text-[#999999] mb-2">Quick Presets</p>
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="presetBar"></div>
+      </div>
+
+      <!-- Generated prompt -->
+      <div class="surface p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-semibold text-[#111111]">Generated Prompt</span>
+          <span class="text-[10px] text-[#999999] font-mono" id="promptTool">—</span>
+        </div>
+        <div id="promptBox" class="prompt-fade font-mono text-[13px] leading-relaxed text-[#1a1a1a] bg-[#f8f8f6] border border-[#e0e0dc] rounded-lg p-3 min-h-[140px] whitespace-pre-wrap break-words">
+          <span class="text-[#999999]">Select parameters above to generate your prompt...</span>
+        </div>
+        <p id="promptStats" class="text-[11px] text-[#aaaaaa] mt-1.5">0 words · 0 characters</p>
+
+        <!-- Negative prompt (conditional) -->
+        <div id="negativeWrap" class="hidden mt-3">
+          <span class="text-xs font-semibold text-[#555555]">Negative Prompt</span>
+          <div id="negativeBox" class="prompt-fade font-mono text-[12px] leading-relaxed text-[#991b1b] bg-[#fff8f8] border border-[#fecaca] rounded-lg p-3 mt-1 whitespace-pre-wrap break-words"></div>
+        </div>
+      </div>
+
+      <!-- Action buttons 2x2 -->
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btnCopy" class="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold rounded-[10px] px-4 py-3 text-sm flex items-center justify-center gap-2 min-h-[44px]">
+          <span class="btn-icon">📋</span><span class="btn-label">Copy Prompt</span>
+        </button>
+        <button id="btnCopyNeg" class="bg-[#f4f4f2] hover:bg-[#e8e8e4] border border-[#e0e0dc] text-[#555555] font-semibold rounded-[10px] px-4 py-3 text-sm flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-40 disabled:cursor-not-allowed">
+          <span class="btn-icon">📋</span><span class="btn-label">Copy Negative</span>
+        </button>
+        <button id="btnDownload" class="bg-[#f4f4f2] hover:bg-[#e8e8e4] border border-[#e0e0dc] text-[#555555] font-semibold rounded-[10px] px-4 py-3 text-sm flex items-center justify-center gap-2 min-h-[44px]">
+          <span>⬇</span><span>Download .txt</span>
+        </button>
+        <button id="btnReset" class="bg-[#fff0f0] hover:bg-[#fee2e2] border border-[#fecaca] text-[#dc2626] font-semibold rounded-[10px] px-4 py-3 text-sm flex items-center justify-center gap-2 min-h-[44px]">
+          <span>↺</span><span class="reset-label">Reset All</span>
+        </button>
+      </div>
+
+      <!-- Prompt history -->
+      <div class="surface p-4">
+        <p class="text-sm font-semibold mb-2 text-[#111111]">Recent Prompts</p>
+        <div id="historyList" class="space-y-2">
+          <p class="text-[11px] text-[#999999]">No prompts generated yet. Copy or download a prompt to save it here.</p>
+        </div>
+      </div>
+
+      <!-- Save / load presets -->
+      <div class="surface p-4">
+        <p class="text-sm font-semibold mb-2 text-[#111111]">Save Current Configuration</p>
+        <div class="flex gap-2">
+          <input id="presetNameInput" type="text" placeholder="Preset name..." maxlength="30"
+            class="input-focus flex-1 bg-white border border-[#e0e0dc] rounded-lg px-3 py-2 text-sm text-[#111111] placeholder:text-[#999999]" />
+          <button id="btnSavePreset" class="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold rounded-lg px-4 py-2 text-sm min-h-[40px] whitespace-nowrap">Save Current</button>
+        </div>
+        <div id="savedPresets" class="flex flex-wrap gap-2 mt-3"></div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="border-t border-[#e8e8e4] bg-white mt-8">
+    <p class="max-w-[1600px] mx-auto px-6 py-5 text-center text-[12px] text-[#aaaaaa]">
+      Made for photographers &amp; AI artists • Works with Midjourney, Leonardo AI, Adobe Firefly, DALL-E 3 &amp; Stable Diffusion
+    </p>
+  </footer>
+
+  <!-- ============ INSTALL BANNER ============ -->
+  <div id="installBanner">
+    <div class="install-card">
+      <!-- Default (Chrome/Android) variant -->
+      <div id="installDefault">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          </span>
+          <div>
+            <p class="font-bold text-[#111111] text-[15px]">Install HeadshotAI</p>
+            <p class="text-[12px] text-[#777777]">Add to your home screen for quick, offline access</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="installAccept" class="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold rounded-[10px] py-2.5 text-sm min-h-[44px]">Install App</button>
+          <button id="installDismiss" class="bg-white border border-[#e0e0dc] text-[#555555] font-semibold rounded-[10px] py-2.5 text-sm min-h-[44px] hover:bg-[#f4f4f2]">Not Now</button>
+        </div>
+      </div>
+      <!-- iOS Safari variant -->
+      <div id="installIOS" class="hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          </span>
+          <div>
+            <p class="font-bold text-[#111111] text-[15px]">Install HeadshotAI</p>
+            <p class="text-[12px] text-[#777777]">Install this app on your iPhone or iPad</p>
+          </div>
+          <button id="installDismissIOS" class="ml-auto text-[#999999] hover:text-[#555555] text-xl leading-none px-1">×</button>
+        </div>
+        <p class="text-[13px] text-[#555555] flex items-center gap-1.5 flex-wrap">
+          Tap
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-middle"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+          then <span class="font-semibold">"Add to Home Screen"</span> to install.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /* =========================================================================
+     AI HEADSHOT PROMPT BUILDER — pure vanilla JS, single source of truth.
+     ========================================================================= */
+
+  /* ---- Background color swatch presets ---- */
+  const SWATCHES = [
+    { name: 'White',         hex: '#ffffff' },
+    { name: 'Light Grey',    hex: '#e5e5e5' },
+    { name: 'Dark Grey',     hex: '#404040' },
+    { name: 'Charcoal',      hex: '#1a1a1a' },
+    { name: 'Navy',          hex: '#1e3a5f' },
+    { name: 'Sage Green',    hex: '#87a878' },
+    { name: 'Warm Beige',    hex: '#d4b896' },
+    { name: 'Dusty Rose',    hex: '#c8a4a4' },
+    { name: 'Deep Burgundy', hex: '#6b2737' },
+    { name: 'Black',         hex: '#000000' },
+  ];
+
+  /* ---- Clean SVG line icons (inner markup, wrapped by buildCards) ---- */
+  const ICONS = {
+    subject: `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>`,
+    photo: `<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>`,
+    lighting: `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`,
+    background: `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline>`,
+    wardrobe: `<path d="M16 3l5 3-3 4-2-1.5V20a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8.5L6 10 3 6l5-3"></path><path d="M9 3a3 3 0 0 0 6 0"></path>`,
+    render: `<path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"></path><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"></path>`,
+    tool: `<rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line>`,
+  };
+
+  /* ---- Card / group configuration (drives all rendering) ---- */
+  const CONFIG = [
+    { id: 'subject', title: 'Subject', icon: ICONS.subject, groups: [
+      { key: 'gender',     label: 'Gender',          options: ['Man','Woman','Non-binary','Unspecified'] },
+      { key: 'age',        label: 'Age Range',       options: ['20s','30s','40s','50s','60s+'] },
+      { key: 'expression', label: 'Expression/Mood', options: ['Confident','Friendly','Approachable','Serious','Authoritative','Warm'] },
+      { key: 'skinTone',   label: 'Skin Tone',       options: ['Fair','Light','Medium','Tan','Brown','Deep'] },
+    ]},
+    { id: 'photo', title: 'Photography Style', icon: ICONS.photo, groups: [
+      { key: 'shotType',    label: 'Shot Type',     options: ['Close-up Portrait','Mid Shot','Half Body','Environmental'] },
+      { key: 'cameraAngle', label: 'Camera Angle',  options: ['Eye Level','Slightly Above','3/4 Angle','Slight Low Angle'] },
+      { key: 'lensStyle',   label: 'Lens Style',    options: ['85mm Portrait','50mm Natural','35mm Environmental','135mm Telephoto'] },
+      { key: 'dof',         label: 'Depth of Field',options: ['Shallow Bokeh','Medium Blur','Deep Focus'] },
+    ]},
+    { id: 'lighting', title: 'Lighting', icon: ICONS.lighting, groups: [
+      { key: 'lightPattern',  label: 'Lighting Pattern', options: ['Rembrandt','Butterfly','Split','Loop','Broad','Flat'] },
+      { key: 'lightSource',   label: 'Light Source',     options: ['Studio Softbox','Natural Window','Ring Light','Golden Hour','Overcast Outdoor'] },
+      { key: 'lightDir',      label: 'Light Direction',  options: ['Front Lit','Side Lit','Backlit Rim','Top Down'] },
+      { key: 'shadow',        label: 'Shadow Intensity', options: ['Soft & Even','Medium Contrast','High Dramatic'] },
+    ]},
+    { id: 'background', title: 'Background', icon: ICONS.background, groups: [
+      { key: 'bgType',  label: 'Background Type',  options: ['Solid Color','Gradient','Blurred Office','Urban Street','Nature','Abstract Studio'] },
+      { key: 'bgColor', label: 'Background Color', type: 'swatch' },
+      { key: 'bgBlur',  label: 'Background Blur',  options: ['None','Subtle Blur','Heavy Bokeh'] },
+      { key: 'environment', label: 'Environment',  options: ['Corporate Office','Coffee Shop','Outdoor Park','Modern Minimal','Abstract'] },
+    ]},
+    { id: 'wardrobe', title: 'Wardrobe & Style', icon: ICONS.wardrobe, groups: [
+      { key: 'attire',  label: 'Attire',           options: ['Business Formal','Business Casual','Smart Casual','Creative Casual','Medical/Uniform'] },
+      { key: 'collar',  label: 'Collar/Top Style', options: ['Suit & Tie','Blazer Open Collar','Crew Neck','Turtleneck','Dress Shirt'] },
+      { key: 'palette', label: 'Color Palette',    options: ['Neutral Tones','Bold Colors','Monochrome','Earthy','Dark & Moody'] },
+      { key: 'accessories', label: 'Accessories (multi-select)', multi: true, options: ['Glasses','Minimal Jewelry','Watch','None'] },
+    ]},
+    { id: 'render', title: 'Rendering & Post-Processing', icon: ICONS.render, groups: [
+      { key: 'realism',     label: 'Realism Level',  options: ['Photorealistic','Hyper-real Detailed','Editorial Stylized','Cinematic'] },
+      { key: 'colorGrade',  label: 'Color Grading',  options: ['Warm & Golden','Cool & Clean','Desaturated Film','Cinematic Teal-Orange','Bright & Airy'] },
+      { key: 'skinQuality', label: 'Skin Quality',   options: ['Natural Unretouched','Light Retouch','Editorial Polish','Flawless Skin'] },
+      { key: 'grain',       label: 'Film Grain',     options: ['None','Subtle Grain','Heavy Analog'] },
+      { key: 'qualityTags', label: 'Image Quality Tags (multi-select)', multi: true,
+        options: ['8K Resolution','RAW Photo','Shot on Sony A7R','Shot on Hasselblad','HDR','Professional Photography','Award-winning Photo'] },
+    ]},
+    { id: 'tool', title: 'AI Tool Target', icon: ICONS.tool, groups: [
+      { key: 'targetTool',  label: 'Target Tool',        options: ['Midjourney','Leonardo AI','Adobe Firefly','DALL-E 3','Stable Diffusion','ChatGPT','Gemini','Ideogram','Flux','Other'] },
+      { key: 'detailLevel', label: 'Prompt Detail Level',options: ['Standard','Detailed','Ultra Detailed'] },
+    ]},
+  ];
+
+  /* Total selectable groups → used for the strength meter. */
+  const TOTAL_GROUPS = CONFIG.reduce((n, c) => n + c.groups.length, 0);
+
+  /* ---- Single state object: groupKey → value (string) or array (multi) ---- */
+  const state = { selections: {} };
+
+  /* =========================================================================
+     RENDERING
+     ========================================================================= */
+  const configPanel = document.getElementById('configPanel');
+
+  function buildCards() {
+    configPanel.innerHTML = CONFIG.map(card => `
+      <div class="card" data-card="${card.id}">
+        <button class="card-header w-full flex items-center justify-between px-5 py-4 text-left">
+          <span class="flex items-center gap-2.5 font-semibold text-[15px] text-[#111111]">
+            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${card.icon}</svg>
+            ${card.title}
+          </span>
+          <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="card-body px-5 pb-5 space-y-4">
+          ${card.groups.map(g => renderGroup(g)).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderGroup(g) {
+    const inner = g.type === 'swatch'
+      ? `<div class="flex flex-wrap gap-2.5">${SWATCHES.map(s => `
+          <button class="swatch" data-group="${g.key}" data-value="${s.name}" title="${s.name}" style="background:${s.hex}"></button>
+        `).join('')}</div>`
+      : `<div class="flex flex-wrap gap-2">${g.options.map(o => `
+          <button class="chip" data-group="${g.key}" data-value="${o}" data-multi="${g.multi ? '1' : '0'}">${o}</button>
+        `).join('')}</div>`;
+    return `
+      <div>
+        <p class="text-[12px] font-medium text-[#555555] mb-2">${g.label}</p>
+        ${inner}
+      </div>`;
+  }
+
+  /* Refresh selected styling for all chips/swatches from state. */
+  function refreshSelections() {
+    document.querySelectorAll('.chip').forEach(el => {
+      const sel = state.selections[el.dataset.group];
+      const on = el.dataset.multi === '1'
+        ? Array.isArray(sel) && sel.includes(el.dataset.value)
+        : sel === el.dataset.value;
+      el.classList.toggle('selected', !!on);
+    });
+    document.querySelectorAll('.swatch').forEach(el => {
+      el.classList.toggle('selected', state.selections[el.dataset.group] === el.dataset.value);
+    });
+  }
+
+  /* =========================================================================
+     SELECTION HANDLING (event delegation)
+     ========================================================================= */
+  configPanel.addEventListener('click', (e) => {
+    const header = e.target.closest('.card-header');
+    if (header) { header.closest('.card').classList.toggle('collapsed'); return; }
+
+    const node = e.target.closest('.chip, .swatch');
+    if (!node) return;
+
+    const group = node.dataset.group;
+    const value = node.dataset.value;
+    const isMulti = node.dataset.multi === '1';
+
+    if (isMulti) {
+      const arr = Array.isArray(state.selections[group]) ? state.selections[group] : [];
+      if (arr.includes(value)) {
+        state.selections[group] = arr.filter(v => v !== value);
+        if (!state.selections[group].length) delete state.selections[group];
+      } else {
+        // "None" is exclusive within an accessories-style multi group
+        state.selections[group] = value === 'None' ? ['None'] : [...arr.filter(v => v !== 'None'), value];
+      }
+    } else {
+      if (state.selections[group] === value) delete state.selections[group]; // toggle off
+      else state.selections[group] = value;
+    }
+
+    clearActivePreset(); // user diverged from any loaded preset
+    refreshSelections();
+    updateOutput();
+  });
+
+  /* =========================================================================
+     PROMPT GENERATION
+     ========================================================================= */
+
+  // --- phrase maps ---
+  const SHOT = { 'Close-up Portrait':'close-up portrait', 'Mid Shot':'mid-shot portrait', 'Half Body':'half-body portrait', 'Environmental':'environmental portrait' };
+  const GENDER = { 'Man':'man', 'Woman':'woman', 'Non-binary':'non-binary person', 'Unspecified':'person' };
+  const ANGLE = { 'Eye Level':'at eye level', 'Slightly Above':'from slightly above', '3/4 Angle':'at a 3/4 angle', 'Slight Low Angle':'from a slight low angle' };
+  const LENS = { '85mm Portrait':'85mm portrait lens', '50mm Natural':'50mm natural lens', '35mm Environmental':'35mm environmental lens', '135mm Telephoto':'135mm telephoto lens' };
+  const DOF = { 'Shallow Bokeh':'shallow depth of field with creamy bokeh', 'Medium Blur':'medium depth of field', 'Deep Focus':'deep focus throughout' };
+  const PATTERN = { 'Rembrandt':'Rembrandt lighting', 'Butterfly':'butterfly lighting', 'Split':'split lighting', 'Loop':'loop lighting', 'Broad':'broad lighting', 'Flat':'flat lighting' };
+  const SOURCE = { 'Studio Softbox':'a studio softbox', 'Natural Window':'natural window light', 'Ring Light':'a ring light', 'Golden Hour':'warm golden-hour sunlight', 'Overcast Outdoor':'soft overcast outdoor light' };
+  const LIGHTDIR = { 'Front Lit':'front lit', 'Side Lit':'side lit', 'Backlit Rim':'with a backlit rim', 'Top Down':'lit from above' };
+  const SHADOW = { 'Soft & Even':'soft even shadows', 'Medium Contrast':'medium-contrast shadows', 'High Dramatic':'high, dramatic shadows' };
+  const BGTYPE = { 'Solid Color':'solid color', 'Gradient':'smooth gradient', 'Blurred Office':'blurred office', 'Urban Street':'urban street', 'Nature':'natural outdoor', 'Abstract Studio':'abstract studio' };
+  const BGBLUR = { 'None':'', 'Subtle Blur':'with subtle blur', 'Heavy Bokeh':'with heavy bokeh' };
+  const ENVIRONMENT = { 'Corporate Office':'in a corporate office', 'Coffee Shop':'in a cozy coffee shop', 'Outdoor Park':'in an outdoor park', 'Modern Minimal':'in a modern minimal space', 'Abstract':'in an abstract setting' };
+  const COLLAR = { 'Suit & Tie':'a tailored suit and tie', 'Blazer Open Collar':'a blazer with an open collar', 'Crew Neck':'a crew-neck top', 'Turtleneck':'a turtleneck', 'Dress Shirt':'a crisp dress shirt' };
+  const ATTIRE = { 'Business Formal':'business formal', 'Business Casual':'business casual', 'Smart Casual':'smart casual', 'Creative Casual':'creative casual', 'Medical/Uniform':'a professional uniform' };
+  const PALETTE = { 'Neutral Tones':'neutral tones', 'Bold Colors':'bold colors', 'Monochrome':'a monochrome palette', 'Earthy':'earthy tones', 'Dark & Moody':'dark, moody tones' };
+  const COLORGRADE = { 'Warm & Golden':'warm golden color grading', 'Cool & Clean':'cool, clean color grading', 'Desaturated Film':'desaturated film color grading', 'Cinematic Teal-Orange':'cinematic teal-and-orange color grading', 'Bright & Airy':'bright and airy color grading' };
+  const SKINQ = { 'Natural Unretouched':'natural unretouched skin', 'Light Retouch':'light skin retouching', 'Editorial Polish':'editorial skin polish', 'Flawless Skin':'flawless skin' };
+  const GRAIN = { 'None':'', 'Subtle Grain':'subtle film grain', 'Heavy Analog':'heavy analog film grain' };
+  const REALISM = { 'Photorealistic':'Photorealistic', 'Hyper-real Detailed':'Hyper-realistic, highly detailed', 'Editorial Stylized':'Editorial, stylized', 'Cinematic':'Cinematic' };
+  const QTAG = { '8K Resolution':'8K resolution', 'RAW Photo':'RAW photo', 'Shot on Sony A7R':'shot on Sony A7R', 'Shot on Hasselblad':'shot on Hasselblad', 'HDR':'HDR', 'Professional Photography':'professional photography', 'Award-winning Photo':'award-winning photo' };
+  const ACCESSORY = { 'Glasses':'glasses', 'Minimal Jewelry':'minimal jewelry', 'Watch':'a watch' };
+
+  const article = (w) => /^[aeiou]/i.test(w.trim()) ? 'an' : 'a';
+  const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+  const NEGATIVE_PROMPT = 'blurry, distorted, low quality, bad lighting, unflattering angle, overexposed, underexposed, cartoon, illustration, painting, text, watermark, extra limbs, deformed face, disfigured, mutated hands, plastic skin, oversaturated';
+
+  /* Build the descriptive body (tool-agnostic), returned as an array of clauses. */
+  function buildClauses() {
+    const s = state.selections;
+    const clauses = [];
+
+    // --- 1+2: shot type + subject ---
+    const shotPhrase = s.shotType ? SHOT[s.shotType] : 'professional headshot';
+    const leadAdj = s.realism ? REALISM[s.realism] + ' ' : '';
+
+    const subjBits = [];
+    if (s.expression) subjBits.push(s.expression.toLowerCase());
+    subjBits.push(s.gender ? GENDER[s.gender] : 'person');
+    let subject = subjBits.join(' ');
+    if (s.age) subject += s.age === '60s+' ? ' in their 60s or older' : ` in their ${s.age}`;
+    if (s.skinTone) subject += ` with ${s.skinTone.toLowerCase()} skin tone`;
+
+    clauses.push(`${leadAdj}${shotPhrase} of ${article(subject)} ${subject}`);
+
+    // --- 3: wardrobe ---
+    const wardrobe = [];
+    if (s.collar) wardrobe.push(`wearing ${COLLAR[s.collar]}`);
+    else if (s.attire) wardrobe.push(`dressed in ${ATTIRE[s.attire]} attire`);
+    if (s.collar && s.attire) wardrobe.push(`${ATTIRE[s.attire]} style`);
+    if (s.palette) wardrobe.push(`in ${PALETTE[s.palette]}`);
+    if (Array.isArray(s.accessories) && s.accessories.length && !s.accessories.includes('None')) {
+      const acc = s.accessories.map(a => ACCESSORY[a]).filter(Boolean);
+      if (acc.length) wardrobe.push(`with ${acc.join(' and ')}`);
+    }
+    if (wardrobe.length) clauses.push(wardrobe.join(', '));
+
+    // --- camera (angle + lens + dof) ---
+    const cam = [];
+    if (s.cameraAngle || s.lensStyle) {
+      cam.push('shot' + (s.cameraAngle ? ' ' + ANGLE[s.cameraAngle] : '') + (s.lensStyle ? ' with ' + LENS[s.lensStyle] : ''));
+    }
+    if (s.dof) cam.push(DOF[s.dof]);
+    if (cam.length) clauses.push(cam.join(', '));
+
+    // --- 4: lighting ---
+    const light = [];
+    if (s.lightPattern) light.push(PATTERN[s.lightPattern] + (s.lightSource ? ' from ' + SOURCE[s.lightSource] : ''));
+    else if (s.lightSource) light.push('lit by ' + SOURCE[s.lightSource]);
+    if (s.lightDir) light.push(LIGHTDIR[s.lightDir]);
+    if (s.shadow) light.push(SHADOW[s.shadow]);
+    if (light.length) clauses.push(light.join(', '));
+
+    // --- 5: background ---
+    const bg = [];
+    if (s.bgType) bg.push(`${BGTYPE[s.bgType]} background`);
+    if (s.bgColor) bg.push(`in ${s.bgColor.toLowerCase()} tones`);
+    if (s.bgBlur && BGBLUR[s.bgBlur]) bg.push(BGBLUR[s.bgBlur]);
+    if (s.environment) bg.push(ENVIRONMENT[s.environment]);
+    if (bg.length) clauses.push(bg.join(' '));
+
+    // --- 6: post-processing ---
+    const post = [];
+    if (s.colorGrade) post.push(COLORGRADE[s.colorGrade]);
+    if (s.skinQuality) post.push(SKINQ[s.skinQuality]);
+    if (s.grain && GRAIN[s.grain]) post.push(GRAIN[s.grain]);
+    if (post.length) clauses.push(post.join(', '));
+
+    // --- detail level emphasis ---
+    if (s.detailLevel === 'Ultra Detailed') clauses.push('intricate fine details, ultra-sharp focus, highly detailed');
+    else if (s.detailLevel === 'Detailed') clauses.push('finely detailed, sharp focus');
+
+    // --- 7: quality tags ---
+    if (Array.isArray(s.qualityTags) && s.qualityTags.length) {
+      clauses.push(s.qualityTags.map(t => QTAG[t]).join(', '));
+    }
+
+    return clauses;
+  }
+
+  /* Assemble final prompt + negative, formatted per the target tool. */
+  function buildPrompt() {
+    const clauses = buildClauses();
+    if (!clauses.length) return { prompt: '', negative: '', tool: state.selections.targetTool || '' };
+
+    let body = clauses.join(', ');
+    body = cap(body);
+
+    const tool = state.selections.targetTool || '';
+    let prompt = body;
+    let negative = '';
+
+    switch (tool) {
+      case 'Midjourney':
+        prompt = body + ' --ar 1:1 --v 6 --style raw';
+        negative = NEGATIVE_PROMPT;
+        break;
+      case 'Leonardo AI':
+        prompt = 'masterpiece, best quality, ' + body;
+        break;
+      case 'Adobe Firefly':
+        prompt = 'Photograph of ' + lowerFirst(stripLeadAdj(body));
+        break;
+      case 'DALL-E 3':
+      case 'ChatGPT':
+      case 'Gemini':
+        prompt = body.replace(/[.\s]*$/, '') + '.'; // natural language, no params
+        break;
+      // Ideogram, Flux, Other → clean descriptive prompt (handled by default)
+      case 'Stable Diffusion':
+        negative = NEGATIVE_PROMPT;
+        prompt = body;
+        break;
+      default:
+        prompt = body;
+    }
+    return { prompt, negative, tool };
+  }
+
+  // Helpers for Firefly formatting
+  const lowerFirst = (s) => s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+  // Firefly: drop realism lead-adjective so the "Photograph of" prefix reads naturally
+  function stripLeadAdj(body) {
+    for (const v of Object.values(REALISM)) {
+      if (body.startsWith(v + ' ')) return body.slice(v.length + 1);
+    }
+    return body;
+  }
+
+  /* =========================================================================
+     OUTPUT / METER / NEGATIVE BOX
+     ========================================================================= */
+  const promptBox    = document.getElementById('promptBox');
+  const promptTool   = document.getElementById('promptTool');
+  const promptStats  = document.getElementById('promptStats');
+  const negativeWrap = document.getElementById('negativeWrap');
+  const negativeBox  = document.getElementById('negativeBox');
+  const strengthBar  = document.getElementById('strengthBar');
+  const strengthPct  = document.getElementById('strengthPct');
+  const strengthCount= document.getElementById('strengthCount');
+  const btnCopyNeg   = document.getElementById('btnCopyNeg');
+
+  let current = { prompt: '', negative: '', tool: '' };
+
+  function updateOutput() {
+    current = buildPrompt();
+
+    // prompt box (with fade)
+    promptBox.style.opacity = 0;
+    requestAnimationFrame(() => {
+      if (current.prompt) {
+        promptBox.textContent = current.prompt;
+      } else {
+        promptBox.innerHTML = '<span class="text-[#999999]">Select parameters above to generate your prompt...</span>';
+      }
+      promptBox.style.opacity = 1;
+    });
+
+    promptTool.textContent = current.tool || '—';
+
+    // word / character count
+    const words = current.prompt ? current.prompt.trim().split(/\s+/).filter(Boolean).length : 0;
+    const chars = current.prompt ? current.prompt.length : 0;
+    promptStats.textContent = `${words} words · ${chars} characters`;
+
+    // negative box (only Midjourney / Stable Diffusion)
+    if (current.negative) {
+      negativeWrap.classList.remove('hidden');
+      negativeBox.textContent = current.negative;
+      btnCopyNeg.disabled = false;
+    } else {
+      negativeWrap.classList.add('hidden');
+      btnCopyNeg.disabled = true;
+    }
+
+    // strength meter + dynamic label
+    const filled = countFilled();
+    const pct = Math.round((filled / TOTAL_GROUPS) * 100);
+    strengthBar.style.width = pct + '%';
+
+    let label, color;
+    if (pct <= 25)      { label = 'Just Getting Started'; color = '#999999'; }
+    else if (pct <= 50) { label = 'Taking Shape';         color = '#d97706'; }
+    else if (pct <= 75) { label = 'Looking Good';         color = '#2563eb'; }
+    else                { label = 'Prompt Ready!';        color = '#16a34a'; }
+    strengthPct.textContent = label;
+    strengthPct.style.color = color;
+    strengthCount.textContent = `${filled} of ${TOTAL_GROUPS} parameters configured · ${pct}%`;
+  }
+
+  function countFilled() {
+    let n = 0;
+    for (const k in state.selections) {
+      const v = state.selections[k];
+      if (Array.isArray(v) ? v.length : v) n++;
+    }
+    return n;
+  }
+
+  /* =========================================================================
+     PRESETS (built-in)
+     ========================================================================= */
+  const PRESETS = {
+    'LinkedIn Pro': { gender:'Unspecified', age:'30s', expression:'Confident', skinTone:'Medium', shotType:'Close-up Portrait', cameraAngle:'Eye Level', lensStyle:'85mm Portrait', dof:'Shallow Bokeh', lightPattern:'Loop', lightSource:'Studio Softbox', lightDir:'Front Lit', shadow:'Soft & Even', bgType:'Gradient', bgColor:'Light Grey', bgBlur:'Subtle Blur', attire:'Business Casual', collar:'Blazer Open Collar', palette:'Neutral Tones', realism:'Photorealistic', colorGrade:'Cool & Clean', skinQuality:'Light Retouch', grain:'None', qualityTags:['8K Resolution','Professional Photography'], targetTool:'Midjourney', detailLevel:'Detailed' },
+    'Executive Portrait': { gender:'Man', age:'50s', expression:'Authoritative', skinTone:'Light', shotType:'Mid Shot', cameraAngle:'Slightly Above', lensStyle:'85mm Portrait', dof:'Shallow Bokeh', lightPattern:'Rembrandt', lightSource:'Studio Softbox', lightDir:'Side Lit', shadow:'Medium Contrast', bgType:'Solid Color', bgColor:'Charcoal', bgBlur:'Subtle Blur', environment:'Corporate Office', attire:'Business Formal', collar:'Suit & Tie', palette:'Dark & Moody', realism:'Photorealistic', colorGrade:'Desaturated Film', skinQuality:'Editorial Polish', grain:'Subtle Grain', qualityTags:['8K Resolution','RAW Photo','Award-winning Photo'], targetTool:'Midjourney', detailLevel:'Ultra Detailed' },
+    'Creative Director': { gender:'Woman', age:'30s', expression:'Confident', skinTone:'Tan', shotType:'Close-up Portrait', cameraAngle:'3/4 Angle', lensStyle:'50mm Natural', dof:'Shallow Bokeh', lightPattern:'Split', lightSource:'Natural Window', lightDir:'Side Lit', shadow:'High Dramatic', bgType:'Abstract Studio', bgColor:'Deep Burgundy', bgBlur:'Heavy Bokeh', attire:'Creative Casual', collar:'Turtleneck', palette:'Bold Colors', accessories:['Glasses'], realism:'Editorial Stylized', colorGrade:'Cinematic Teal-Orange', skinQuality:'Editorial Polish', grain:'Subtle Grain', qualityTags:['8K Resolution','Shot on Hasselblad'], targetTool:'Leonardo AI', detailLevel:'Ultra Detailed' },
+    'Speaker & Coach': { gender:'Unspecified', age:'40s', expression:'Warm', skinTone:'Brown', shotType:'Half Body', cameraAngle:'Eye Level', lensStyle:'35mm Environmental', dof:'Medium Blur', lightPattern:'Broad', lightSource:'Natural Window', lightDir:'Front Lit', shadow:'Soft & Even', bgType:'Blurred Office', bgColor:'Warm Beige', bgBlur:'Heavy Bokeh', environment:'Modern Minimal', attire:'Smart Casual', collar:'Dress Shirt', palette:'Earthy', realism:'Photorealistic', colorGrade:'Warm & Golden', skinQuality:'Natural Unretouched', grain:'None', qualityTags:['Professional Photography','HDR'], targetTool:'DALL-E 3', detailLevel:'Detailed' },
+    'Medical Professional': { gender:'Woman', age:'30s', expression:'Approachable', skinTone:'Light', shotType:'Mid Shot', cameraAngle:'Eye Level', lensStyle:'85mm Portrait', dof:'Medium Blur', lightPattern:'Butterfly', lightSource:'Ring Light', lightDir:'Front Lit', shadow:'Soft & Even', bgType:'Solid Color', bgColor:'White', bgBlur:'Subtle Blur', attire:'Medical/Uniform', collar:'Crew Neck', palette:'Neutral Tones', realism:'Photorealistic', colorGrade:'Bright & Airy', skinQuality:'Light Retouch', grain:'None', qualityTags:['8K Resolution','Professional Photography'], targetTool:'Adobe Firefly', detailLevel:'Standard' },
+    'Real Estate Agent': { gender:'Man', age:'40s', expression:'Friendly', skinTone:'Medium', shotType:'Half Body', cameraAngle:'Eye Level', lensStyle:'50mm Natural', dof:'Medium Blur', lightPattern:'Loop', lightSource:'Studio Softbox', lightDir:'Front Lit', shadow:'Soft & Even', bgType:'Gradient', bgColor:'Navy', bgBlur:'Subtle Blur', attire:'Business Casual', collar:'Blazer Open Collar', palette:'Neutral Tones', accessories:['Watch'], realism:'Photorealistic', colorGrade:'Warm & Golden', skinQuality:'Light Retouch', grain:'None', qualityTags:['8K Resolution','Professional Photography'], targetTool:'Midjourney', detailLevel:'Detailed' },
+    'Actor Headshot': { gender:'Unspecified', age:'20s', expression:'Confident', skinTone:'Deep', shotType:'Close-up Portrait', cameraAngle:'Eye Level', lensStyle:'135mm Telephoto', dof:'Shallow Bokeh', lightPattern:'Rembrandt', lightSource:'Natural Window', lightDir:'Side Lit', shadow:'Medium Contrast', bgType:'Solid Color', bgColor:'Dark Grey', bgBlur:'Heavy Bokeh', attire:'Smart Casual', collar:'Crew Neck', palette:'Monochrome', realism:'Cinematic', colorGrade:'Desaturated Film', skinQuality:'Natural Unretouched', grain:'Subtle Grain', qualityTags:['RAW Photo','Shot on Sony A7R','Award-winning Photo'], targetTool:'Stable Diffusion', detailLevel:'Ultra Detailed' },
+    'Tech Founder': { gender:'Non-binary', age:'30s', expression:'Confident', skinTone:'Fair', shotType:'Mid Shot', cameraAngle:'Slight Low Angle', lensStyle:'35mm Environmental', dof:'Medium Blur', lightPattern:'Broad', lightSource:'Overcast Outdoor', lightDir:'Front Lit', shadow:'Soft & Even', bgType:'Urban Street', bgColor:'Sage Green', bgBlur:'Heavy Bokeh', environment:'Modern Minimal', attire:'Creative Casual', collar:'Crew Neck', palette:'Dark & Moody', accessories:['Glasses','Watch'], realism:'Cinematic', colorGrade:'Cinematic Teal-Orange', skinQuality:'Light Retouch', grain:'Subtle Grain', qualityTags:['8K Resolution','HDR','Professional Photography'], targetTool:'Midjourney', detailLevel:'Ultra Detailed' },
+  };
+
+  function buildPresetBar() {
+    const bar = document.getElementById('presetBar');
+    bar.innerHTML = Object.keys(PRESETS).map(name =>
+      `<button class="preset-pill" data-preset="${name}">${name}</button>`
+    ).join('');
+    bar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.preset-pill');
+      if (btn) { setActivePreset(btn.dataset.preset); applyPreset(PRESETS[btn.dataset.preset]); }
+    });
+  }
+
+  function setActivePreset(name) {
+    document.querySelectorAll('.preset-pill').forEach(p => p.classList.toggle('active', p.dataset.preset === name));
+  }
+  function clearActivePreset() {
+    document.querySelectorAll('.preset-pill.active').forEach(p => p.classList.remove('active'));
+  }
+
+  function applyPreset(preset) {
+    // Clean any accidental empty values, then replace state.
+    const clean = {};
+    for (const k in preset) {
+      const v = preset[k];
+      if (Array.isArray(v)) { const a = v.filter(Boolean); if (a.length) clean[k] = a; }
+      else if (v) clean[k] = v;
+    }
+    state.selections = clean;
+    refreshSelections();
+    updateOutput();
+    flashCards();
+    // smoothly scroll back to the top of the configuration
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function flashCards() {
+    document.querySelectorAll('.card').forEach(c => {
+      c.classList.remove('flash');
+      void c.offsetWidth; // reflow to restart animation
+      c.classList.add('flash');
+    });
+  }
+
+  /* =========================================================================
+     ACTION BUTTONS
+     ========================================================================= */
+  const btnCopy = document.getElementById('btnCopy');
+  const btnDownload = document.getElementById('btnDownload');
+  const btnReset = document.getElementById('btnReset');
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fallback for non-secure contexts
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch {}
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  function flashSuccess(btn, label) {
+    const orig = btn.innerHTML;
+    const origCls = btn.className;
+    btn.innerHTML = `<span>✓</span><span>${label}</span>`;
+    btn.classList.add('!bg-[#16a34a]', '!text-white', '!border-[#16a34a]');
+    setTimeout(() => { btn.innerHTML = orig; btn.className = origCls; }, 2000);
+  }
+
+  btnCopy.addEventListener('click', async () => {
+    if (!current.prompt) return;
+    addToHistory(current);
+    if (await copyText(current.prompt)) flashSuccess(btnCopy, 'Copied!');
+  });
+
+  btnCopyNeg.addEventListener('click', async () => {
+    if (!current.negative) return;
+    if (await copyText(current.negative)) flashSuccess(btnCopyNeg, 'Copied!');
+  });
+
+  btnDownload.addEventListener('click', () => {
+    if (!current.prompt) return;
+    let content = current.prompt;
+    if (current.negative) content += '\n\nNEGATIVE PROMPT:\n' + current.negative;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'headshot-prompt.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    addToHistory(current);
+  });
+
+  // Two-step confirm "tooltip" for reset
+  let resetArmed = false, resetTimer = null;
+  btnReset.addEventListener('click', () => {
+    const label = btnReset.querySelector('.reset-label');
+    if (!resetArmed) {
+      resetArmed = true;
+      label.textContent = 'Click to confirm';
+      btnReset.classList.add('!bg-[#fee2e2]', '!border-[#dc2626]');
+      resetTimer = setTimeout(() => {
+        resetArmed = false; label.textContent = 'Reset All';
+        btnReset.classList.remove('!bg-[#fee2e2]', '!border-[#dc2626]');
+      }, 3000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    resetArmed = false;
+    label.textContent = 'Reset All';
+    btnReset.classList.remove('!bg-[#fee2e2]', '!border-[#dc2626]');
+    resetAll();
+  });
+
+  function resetAll() {
+    // ripple-fade currently selected chips
+    document.querySelectorAll('.chip.selected').forEach(el => {
+      el.classList.add('deselecting');
+      setTimeout(() => el.classList.remove('deselecting'), 260);
+    });
+    state.selections = {};
+    clearActivePreset();
+    setTimeout(() => { refreshSelections(); updateOutput(); }, 120);
+  }
+
+  /* =========================================================================
+     HISTORY (localStorage)
+     ========================================================================= */
+  const HISTORY_KEY = 'hpb_history';
+  const historyList = document.getElementById('historyList');
+
+  function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; } }
+  function saveHistory(h) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch {} }
+
+  function addToHistory(item) {
+    if (!item.prompt) return;
+    const hist = loadHistory();
+    if (hist[0] && hist[0].prompt === item.prompt) return; // skip exact dup of last
+    hist.unshift({ prompt: item.prompt, negative: item.negative, tool: item.tool, time: Date.now() });
+    saveHistory(hist.slice(0, 5));
+    renderHistory();
+  }
+
+  function timeAgo(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderHistory() {
+    const hist = loadHistory();
+    if (!hist.length) {
+      historyList.innerHTML = '<p class="text-[11px] text-[#999999]">No prompts generated yet. Copy or download a prompt to save it here.</p>';
+      return;
+    }
+    historyList.innerHTML = hist.map((h, i) => `
+      <details class="bg-[#f8f8f6] border border-[#e8e8e4] rounded-[10px] fade-in">
+        <summary class="cursor-pointer list-none px-3 py-2 flex items-center justify-between gap-2">
+          <span class="text-[11px] text-[#aaaaaa] truncate">${h.tool || 'Prompt'} · ${timeAgo(h.time)}</span>
+          <span class="text-[#aaaaaa] text-xs shrink-0">▾</span>
+        </summary>
+        <div class="px-3 pb-3">
+          <p class="font-mono text-[11px] text-[#555555] whitespace-pre-wrap break-words mb-2">${escapeHtml(h.prompt)}</p>
+          <button class="hist-copy text-[11px] bg-white hover:bg-[#eff6ff] hover:text-[#2563eb] hover:border-[#93c5fd] border border-[#e0e0dc] text-[#555555] rounded-md px-3 py-1.5" data-i="${i}">Copy</button>
+        </div>
+      </details>
+    `).join('');
+  }
+
+  historyList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.hist-copy');
+    if (!btn) return;
+    const hist = loadHistory();
+    const item = hist[+btn.dataset.i];
+    if (item && await copyText(item.prompt)) {
+      const t = btn.textContent; btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = t, 1500);
+    }
+  });
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  /* =========================================================================
+     SAVE / LOAD CUSTOM PRESETS (localStorage)
+     ========================================================================= */
+  const PRESETS_KEY = 'hpb_presets';
+  const savedPresetsEl = document.getElementById('savedPresets');
+  const presetNameInput = document.getElementById('presetNameInput');
+  const btnSavePreset = document.getElementById('btnSavePreset');
+
+  function loadSavedPresets() { try { return JSON.parse(localStorage.getItem(PRESETS_KEY)) || {}; } catch { return {}; } }
+  function saveSavedPresets(p) { try { localStorage.setItem(PRESETS_KEY, JSON.stringify(p)); } catch {} }
+
+  btnSavePreset.addEventListener('click', () => {
+    const name = presetNameInput.value.trim();
+    if (!name) { presetNameInput.focus(); return; }
+    if (!countFilled()) return;
+    const all = loadSavedPresets();
+    all[name] = JSON.parse(JSON.stringify(state.selections));
+    saveSavedPresets(all);
+    presetNameInput.value = '';
+    renderSavedPresets();
+  });
+  presetNameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') btnSavePreset.click(); });
+
+  function renderSavedPresets() {
+    const all = loadSavedPresets();
+    const names = Object.keys(all);
+    if (!names.length) {
+      savedPresetsEl.innerHTML = '<p class="text-[11px] text-[#999999]">No saved presets yet.</p>';
+      return;
+    }
+    savedPresetsEl.innerHTML = names.map(n => `
+      <span class="inline-flex items-center gap-1.5 bg-[#eff6ff] border border-[#bfdbfe] rounded-full pl-3 pr-1.5 py-1.5 text-[12px] text-[#2563eb] fade-in">
+        <button class="load-preset font-medium" data-name="${escapeHtml(n)}">${escapeHtml(n)}</button>
+        <button class="del-preset w-5 h-5 rounded-full bg-[#dbeafe] hover:bg-[#fee2e2] text-[#93c5fd] hover:text-[#dc2626] text-xs flex items-center justify-center" data-name="${escapeHtml(n)}" title="Delete">×</button>
+      </span>
+    `).join('');
+  }
+
+  savedPresetsEl.addEventListener('click', (e) => {
+    const load = e.target.closest('.load-preset');
+    const del = e.target.closest('.del-preset');
+    if (load) {
+      const all = loadSavedPresets();
+      if (all[load.dataset.name]) { clearActivePreset(); applyPreset(all[load.dataset.name]); }
+    } else if (del) {
+      const all = loadSavedPresets();
+      delete all[del.dataset.name];
+      saveSavedPresets(all);
+      renderSavedPresets();
+    }
+  });
+
+  /* =========================================================================
+     "HOW TO USE" TIP BAR
+     ========================================================================= */
+  (function setupTip() {
+    const bar = document.getElementById('tipBar');
+    const TIP_KEY = 'hpb_tip_dismissed';
+    if (localStorage.getItem(TIP_KEY) === '1') { bar.classList.add('hidden'); return; }
+    const steps = document.getElementById('tipSteps');
+    const chev = document.querySelector('.tip-chevron');
+    document.getElementById('tipToggle').addEventListener('click', () => {
+      const open = steps.classList.toggle('hidden');
+      if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+    });
+    document.getElementById('tipClose').addEventListener('click', () => {
+      bar.classList.add('hidden');
+      try { localStorage.setItem(TIP_KEY, '1'); } catch {}
+    });
+  })();
+
+  /* =========================================================================
+     PWA: inline manifest, service worker, install banner
+     ========================================================================= */
+  (function setupPWA() {
+    // Inline camera app icon (filled, blue) as an SVG data URI
+    const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#2563eb"/><g fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><rect x="108" y="176" width="296" height="196" rx="30"/><path d="M192 176l28-42h72l28 42"/><circle cx="256" cy="272" r="60"/></g></svg>`;
+    const iconURI = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
+
+    // point favicon + apple-touch-icon at the blue camera
+    const fav = document.getElementById('favicon'); if (fav) fav.href = iconURI;
+    const apple = document.getElementById('apple-icon'); if (apple) apple.href = iconURI;
+
+    // --- inline web app manifest via Blob URL ---
+    const manifestData = {
+      name: 'AI Headshot Prompt Builder',
+      short_name: 'HeadshotAI',
+      description: 'Generate perfect AI prompts for professional headshot photography',
+      start_url: '.',
+      display: 'standalone',
+      background_color: '#f8f8f6',
+      theme_color: '#2563eb',
+      orientation: 'portrait-primary',
+      icons: [
+        { src: iconURI, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+        { src: iconURI, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
+      ],
+    };
+    try {
+      const mBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+      const mURL = URL.createObjectURL(mBlob);
+      document.getElementById('manifest-link').href = mURL;
+    } catch (e) { /* manifest blob unsupported */ }
+
+    // --- inline service worker via Blob URL (cache-first, offline support) ---
+    if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
+      const swCode = `
+        const CACHE_NAME = 'headshot-builder-v1';
+        self.addEventListener('install', (event) => {
+          event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
+          self.skipWaiting();
+        });
+        self.addEventListener('activate', (event) => { event.waitUntil(clients.claim()); });
+        self.addEventListener('fetch', (event) => {
+          event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+        });
+      `;
+      try {
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swURL = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swURL, { scope: './' })
+          .catch(err => console.warn('Service worker registration not supported in this context:', err && err.message));
+      } catch (e) { console.warn('Service worker blob error:', e && e.message); }
+    }
+
+    // --- install banner UI ---
+    const banner = document.getElementById('installBanner');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const DISMISS_KEY = 'pwa-install-dismissed';
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+
+    function dismissedRecently() {
+      const t = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
+      return t && (Date.now() - t) < SEVEN_DAYS;
+    }
+    function showInstalledBadge() {
+      const b = document.getElementById('installedBadge');
+      if (b) b.classList.remove('hidden');
+    }
+
+    let autoHide = null;
+    function showBanner(ios) {
+      if (isStandalone || dismissedRecently()) return;
+      document.getElementById('installDefault').classList.toggle('hidden', ios);
+      document.getElementById('installIOS').classList.toggle('hidden', !ios);
+      banner.classList.add('show');
+      clearTimeout(autoHide);
+      autoHide = setTimeout(hideBanner, 15000); // auto-dismiss after 15s
+    }
+    function hideBanner() { banner.classList.remove('show'); clearTimeout(autoHide); }
+    function dismissForever() { try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch {} hideBanner(); }
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showBanner(false);
+    });
+
+    document.getElementById('installAccept').addEventListener('click', async () => {
+      hideBanner();
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch {}
+        deferredPrompt = null;
+      }
+    });
+    document.getElementById('installDismiss').addEventListener('click', dismissForever);
+    document.getElementById('installDismissIOS').addEventListener('click', dismissForever);
+
+    window.addEventListener('appinstalled', () => { hideBanner(); showInstalledBadge(); });
+
+    if (isStandalone) {
+      showInstalledBadge();
+    } else if (isIOS && !dismissedRecently()) {
+      // iOS has no beforeinstallprompt — show the manual instruction after a short delay
+      setTimeout(() => showBanner(true), 2500);
+    }
+  })();
+
+  /* =========================================================================
+     INIT
+     ========================================================================= */
+  buildCards();
+  buildPresetBar();
+  renderHistory();
+  renderSavedPresets();
+  refreshSelections();
+  updateOutput();
+  </script>
+</body>
+</html>
