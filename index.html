@@ -2,21 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, viewport-fit=cover" />
   <title>AI Headshot Prompt Builder | Professional AI Photography Prompts</title>
   <meta name="description" content="Configure parameters and generate optimized AI image prompts for realistic professional headshots. Works with Midjourney, Leonardo AI, Adobe Firefly, DALL-E 3 & Stable Diffusion." />
 
-  <!-- PWA meta -->
+  <!-- PWA Core -->
   <meta name="theme-color" content="#2563eb" />
+  <meta name="application-name" content="HeadshotAI" />
+
+  <!-- Android / Chrome -->
   <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- iOS Safari -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="HeadshotAI" />
 
-  <!-- Favicon + icons (hrefs set inline via JS to a blue camera data URI) -->
-  <link rel="icon" id="favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📷</text></svg>" />
-  <link rel="apple-touch-icon" id="apple-icon" />
-  <link rel="manifest" id="manifest-link" />
+  <!-- MS Tiles -->
+  <meta name="msapplication-TileColor" content="#2563eb" />
+  <meta name="msapplication-TileImage" content="./icons/icon-144.png" />
+  <meta name="msapplication-tap-highlight" content="no" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <!-- Apple touch icons -->
+  <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="167x167" href="./icons/icon-167.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png" />
+  <!-- Web app manifest (static file; relative icon paths resolve against it) -->
+  <link rel="manifest" href="./manifest.webmanifest" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -45,6 +62,7 @@
     }
 
     html, body { font-family: 'Inter', system-ui, sans-serif; color: var(--text); }
+    body { overflow-x: hidden !important; max-width: 100vw !important; }
     /* Subtle dot grid only on the outermost page background */
     body {
       background-color: var(--bg);
@@ -172,27 +190,80 @@
     /* Focus ring for the preset-name input */
     .input-focus:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
 
-    /* ---------- Install banner ---------- */
-    #installBanner {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 9999;
-      transform: translateY(130%);
-      transition: transform 400ms ease;
-      padding: 0;
+    /* ---------- PWA install banner (bottom sheet) ---------- */
+    #pwa-install-banner {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      transform: translateY(100%);
+      z-index: 999999 !important;
+      background: #ffffff; border: 1px solid #e0e0dc;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.12), 0 -2px 8px rgba(0,0,0,0.06);
+      padding-top: 12px;
+      padding-left: 20px !important;
+      padding-right: 20px !important;
+      padding-bottom: env(safe-area-inset-bottom, 16px) !important;
+      transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-family: 'Inter', sans-serif;
     }
-    #installBanner.show { transform: translateY(0); }
-    .install-card {
-      background: #ffffff;
-      border: 1px solid #e0e0dc;
-      box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
-      border-radius: 16px 16px 0 0;
-      padding: 20px 24px;
-      max-width: 480px;
-      margin: 0 auto;
-    }
+    #pwa-install-banner.visible { transform: translateY(0) !important; }
+    /* Desktop: floating card pinned bottom-right */
     @media (min-width: 640px) {
-      #installBanner { padding: 0 16px 24px; }
-      .install-card { border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.14); }
+      #pwa-install-banner {
+        left: auto !important;
+        right: 24px !important;
+        bottom: 24px !important;
+        width: 360px !important;
+        max-width: 360px !important;
+        border-radius: 20px !important;
+        transform: translateY(calc(100% + 24px)) !important;
+      }
+      #pwa-install-banner.visible { transform: translateY(0) !important; }
     }
+    /* Keep all banner children clamped within the fixed banner width */
+    .pwa-app-row,
+    .pwa-features,
+    #pwa-chrome-actions,
+    #pwa-ios-actions {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      max-width: 100% !important;
+    }
+    .pwa-features { flex-wrap: wrap !important; gap: 6px !important; }
+    #pwa-install-btn,
+    .pwa-later-btn {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      max-width: 100% !important;
+      word-break: break-word !important;
+    }
+    .pwa-handle { width: 40px; height: 4px; background: #e0e0dc; border-radius: 999px; margin: 0 auto 16px; }
+    @media (min-width: 640px) { .pwa-handle { display: none; } }
+    .pwa-app-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .pwa-icon { width: 52px; height: 52px; background: #2563eb; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37,99,235,0.30); }
+    .pwa-app-info { min-width: 0; }
+    .pwa-app-name { font-size: 15px; font-weight: 700; color: #111111; line-height: 1.3; }
+    .pwa-app-sub { font-size: 12px; color: #888888; margin-top: 2px; }
+    .pwa-close-x { margin-left: auto; background: #f4f4f2; border: none; border-radius: 999px; width: 28px; height: 28px; font-size: 12px; color: #888888; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .pwa-features { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .pwa-features span { background: #f4f4f2; border: 1px solid #e8e8e4; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 500; color: #555555; }
+    #pwa-install-btn { width: 100%; background: #2563eb; color: #ffffff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 10px; transition: background 150ms ease, transform 100ms ease; letter-spacing: -0.01em; }
+    #pwa-install-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+    #pwa-install-btn:active { transform: translateY(0); }
+    .pwa-later-btn { width: 100%; background: transparent; color: #888888; border: 1px solid #e0e0dc; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 150ms ease; }
+    .pwa-later-btn:hover { background: #f4f4f2; color: #555555; }
+    .pwa-ios-instruction { display: flex; align-items: center; justify-content: center; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px; font-size: 14px; color: #1e40af; margin-bottom: 10px; flex-wrap: wrap; text-align: center; }
+
+    /* ---------- Header install button + installed badge ---------- */
+    #header-install-btn { display: none; align-items: center; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms ease; }
+    #header-install-btn:hover { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+    #installed-badge { display: none; align-items: center; background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: 600; }
   </style>
 </head>
 
@@ -219,7 +290,11 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <span id="installedBadge" class="hidden text-[11px] font-semibold text-[#16a34a] bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-3 py-1.5">✓ App Installed</span>
+        <button id="header-install-btn" onclick="triggerInstall()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Install App
+        </button>
+        <div id="installed-badge">✓ App Installed</div>
         <span class="text-[10px] sm:text-[11px] font-medium text-[#2563eb] bg-[#eff6ff] border border-[#bfdbfe] rounded-full px-3 py-1.5">
           Works with Midjourney · Leonardo · Firefly · DALL-E
         </span>
@@ -270,7 +345,7 @@
     <section class="w-full lg:w-[60%] space-y-4" id="configPanel"></section>
 
     <!-- ===== RIGHT PANEL (output) ===== -->
-    <aside class="w-full lg:w-[40%] lg:sticky lg:top-[84px] space-y-4">
+    <aside class="w-full lg:w-[40%] min-w-0 lg:sticky lg:top-[84px] space-y-4">
 
       <!-- Strength meter -->
       <div class="surface p-4">
@@ -333,12 +408,13 @@
       </div>
 
       <!-- Save / load presets -->
-      <div class="surface p-4">
+      <div class="surface p-4" style="box-sizing:border-box; width:100%; overflow:hidden;">
         <p class="text-sm font-semibold mb-2 text-[#111111]">Save Current Configuration</p>
-        <div class="flex gap-2">
+        <div class="flex gap-2" style="width:100%; box-sizing:border-box; align-items:center;">
           <input id="presetNameInput" type="text" placeholder="Preset name..." maxlength="30"
-            class="input-focus flex-1 bg-white border border-[#e0e0dc] rounded-lg px-3 py-2 text-sm text-[#111111] placeholder:text-[#999999]" />
-          <button id="btnSavePreset" class="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold rounded-lg px-4 py-2 text-sm min-h-[40px] whitespace-nowrap">Save Current</button>
+            class="input-focus flex-1 bg-white border border-[#e0e0dc] rounded-lg px-3 py-2 text-sm text-[#111111] placeholder:text-[#999999]"
+            style="flex:1 1 0%; min-width:0; width:0; box-sizing:border-box;" />
+          <button id="btnSavePreset" class="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold rounded-lg px-4 py-2 text-sm min-h-[40px] whitespace-nowrap" style="flex-shrink:0; box-sizing:border-box;">Save Current</button>
         </div>
         <div id="savedPresets" class="flex flex-wrap gap-2 mt-3"></div>
       </div>
@@ -353,45 +429,7 @@
     </p>
   </footer>
 
-  <!-- ============ INSTALL BANNER ============ -->
-  <div id="installBanner">
-    <div class="install-card">
-      <!-- Default (Chrome/Android) variant -->
-      <div id="installDefault">
-        <div class="flex items-center gap-3 mb-4">
-          <span class="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-          </span>
-          <div>
-            <p class="font-bold text-[#111111] text-[15px]">Install HeadshotAI</p>
-            <p class="text-[12px] text-[#777777]">Add to your home screen for quick, offline access</p>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <button id="installAccept" class="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold rounded-[10px] py-2.5 text-sm min-h-[44px]">Install App</button>
-          <button id="installDismiss" class="bg-white border border-[#e0e0dc] text-[#555555] font-semibold rounded-[10px] py-2.5 text-sm min-h-[44px] hover:bg-[#f4f4f2]">Not Now</button>
-        </div>
-      </div>
-      <!-- iOS Safari variant -->
-      <div id="installIOS" class="hidden">
-        <div class="flex items-center gap-3 mb-3">
-          <span class="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-          </span>
-          <div>
-            <p class="font-bold text-[#111111] text-[15px]">Install HeadshotAI</p>
-            <p class="text-[12px] text-[#777777]">Install this app on your iPhone or iPad</p>
-          </div>
-          <button id="installDismissIOS" class="ml-auto text-[#999999] hover:text-[#555555] text-xl leading-none px-1">×</button>
-        </div>
-        <p class="text-[13px] text-[#555555] flex items-center gap-1.5 flex-wrap">
-          Tap
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-middle"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-          then <span class="font-semibold">"Add to Home Screen"</span> to install.
-        </p>
-      </div>
-    </div>
-  </div>
+  <!-- ============ INSTALL BANNER (injected via JS in setupPWA) ============ -->
 
   <script>
   /* =========================================================================
@@ -1055,113 +1093,185 @@
   })();
 
   /* =========================================================================
-     PWA: inline manifest, service worker, install banner
+     PWA: inline manifest, service worker, install banner (bottom sheet)
+     Functions are declared at the top level so inline onclick handlers
+     (dismissBanner / triggerInstall) can reach them.
      ========================================================================= */
-  (function setupPWA() {
-    // Inline camera app icon (filled, blue) as an SVG data URI
-    const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#2563eb"/><g fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><rect x="108" y="176" width="296" height="196" rx="30"/><path d="M192 176l28-42h72l28 42"/><circle cx="256" cy="272" r="60"/></g></svg>`;
-    const iconURI = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
 
-    // point favicon + apple-touch-icon at the blue camera
-    const fav = document.getElementById('favicon'); if (fav) fav.href = iconURI;
-    const apple = document.getElementById('apple-icon'); if (apple) apple.href = iconURI;
+  // --- environment detection ---
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  let deferredPrompt = null;
+  let autoDismissTimer = null;
 
-    // --- inline web app manifest via Blob URL ---
-    const manifestData = {
-      name: 'AI Headshot Prompt Builder',
-      short_name: 'HeadshotAI',
-      description: 'Generate perfect AI prompts for professional headshot photography',
-      start_url: '.',
-      display: 'standalone',
-      background_color: '#f8f8f6',
-      theme_color: '#2563eb',
-      orientation: 'portrait-primary',
-      icons: [
-        { src: iconURI, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-        { src: iconURI, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
-      ],
-    };
+  const wasDismissed = () => {
+    const t = localStorage.getItem('pwa_dismissed_at');
+    if (!t) return false;
+    return (Date.now() - parseInt(t, 10)) < 7 * 24 * 60 * 60 * 1000;
+  };
+
+  // Web app manifest is now a static file (./manifest.webmanifest) referenced
+  // directly from <head> — no JS injection needed.
+
+  // --- inline service worker (Blob URL), caches the page for offline use ---
+  const SW_CODE = `
+const CACHE = 'headshot-builder-v1';
+const ASSETS = ['/'];
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+  );
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())
+  );
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => caches.match('/')))
+  );
+});
+`;
+  function registerBlobSW() {
+    // Fallback used only when the page is opened directly from disk (file://),
+    // where a same-origin sw.js path isn't available. Note: browsers block
+    // registering a worker from a blob: URL, so this is best-effort only.
     try {
-      const mBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
-      const mURL = URL.createObjectURL(mBlob);
-      document.getElementById('manifest-link').href = mURL;
-    } catch (e) { /* manifest blob unsupported */ }
+      const swBlob = new Blob([SW_CODE], { type: 'application/javascript' });
+      const swURL = URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register(swURL, { scope: './' })
+        .then(reg => console.log('SW (blob fallback) registered', reg))
+        .catch(err => console.log('SW blob fallback failed', err && err.message));
+    } catch (e) { console.log('SW blob fallback failed', e && e.message); }
+  }
 
-    // --- inline service worker via Blob URL (cache-first, offline support) ---
-    if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
-      const swCode = `
-        const CACHE_NAME = 'headshot-builder-v1';
-        self.addEventListener('install', (event) => {
-          event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
-          self.skipWaiting();
-        });
-        self.addEventListener('activate', (event) => { event.waitUntil(clients.claim()); });
-        self.addEventListener('fetch', (event) => {
-          event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
-        });
-      `;
-      try {
-        const swBlob = new Blob([swCode], { type: 'application/javascript' });
-        const swURL = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swURL, { scope: './' })
-          .catch(err => console.warn('Service worker registration not supported in this context:', err && err.message));
-      } catch (e) { console.warn('Service worker blob error:', e && e.message); }
+  if ('serviceWorker' in navigator) {
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      // Preferred: real same-origin worker → true offline caching + reliable install prompt
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then(reg => console.log('SW registered', reg.scope))
+        .catch(err => { console.log('sw.js failed, trying inline fallback', err && err.message); registerBlobSW(); });
+    } else {
+      // Opened from file:// — fall back to the inline blob worker
+      registerBlobSW();
     }
+  }
 
-    // --- install banner UI ---
-    const banner = document.getElementById('installBanner');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    const DISMISS_KEY = 'pwa-install-dismissed';
-    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+  // --- install banner (injected into the DOM on demand) ---
+  function injectBanner() {
+    if (document.getElementById('pwa-install-banner')) return;
+    const tpl = document.createElement('div');
+    tpl.innerHTML = `
+      <div id="pwa-install-banner">
+        <div class="pwa-handle"></div>
+        <div class="pwa-app-row">
+          <div class="pwa-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          </div>
+          <div class="pwa-app-info">
+            <div class="pwa-app-name">AI Headshot Prompt Builder</div>
+            <div class="pwa-app-sub">Free · Works Offline · No Ads</div>
+          </div>
+          <button class="pwa-close-x" onclick="dismissBanner()" aria-label="Dismiss">✕</button>
+        </div>
+        <div class="pwa-features">
+          <span>⚡ Instant Access</span>
+          <span>📶 Works Offline</span>
+          <span>🏠 Home Screen</span>
+        </div>
+        <div id="pwa-chrome-actions">
+          <button id="pwa-install-btn" onclick="triggerInstall()">Install App — It's Free</button>
+          <button class="pwa-later-btn" onclick="dismissBanner()">Not Now</button>
+        </div>
+        <div id="pwa-ios-actions" style="display:none">
+          <div class="pwa-ios-instruction">
+            <span>Tap</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            <span>then tap <strong>"Add to Home Screen"</strong></span>
+          </div>
+          <button class="pwa-later-btn" onclick="dismissBanner()">Got It</button>
+        </div>
+      </div>`;
+    document.body.appendChild(tpl.firstElementChild);
+  }
 
-    function dismissedRecently() {
-      const t = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
-      return t && (Date.now() - t) < SEVEN_DAYS;
-    }
-    function showInstalledBadge() {
-      const b = document.getElementById('installedBadge');
-      if (b) b.classList.remove('hidden');
-    }
+  function showInstallBanner(type) {
+    if (isStandalone || wasDismissed()) return;
+    injectBanner();
+    const banner = document.getElementById('pwa-install-banner');
+    if (!banner) return;
+    // Ensure the banner is a direct child of <body> so no scrollable/overflow:hidden
+    // ancestor can clip it or detach it from the fixed viewport.
+    if (banner.parentElement !== document.body) document.body.appendChild(banner);
+    const chrome = document.getElementById('pwa-chrome-actions');
+    const ios = document.getElementById('pwa-ios-actions');
+    if (type === 'ios') { chrome.style.display = 'none'; ios.style.display = 'block'; }
+    else { chrome.style.display = 'block'; ios.style.display = 'none'; }
+    setTimeout(() => banner.classList.add('visible'), 800);
+    clearTimeout(autoDismissTimer);
+    autoDismissTimer = setTimeout(() => hideBanner(), 20000); // auto-hide after 20s (no dismissal stored)
+  }
 
-    let autoHide = null;
-    function showBanner(ios) {
-      if (isStandalone || dismissedRecently()) return;
-      document.getElementById('installDefault').classList.toggle('hidden', ios);
-      document.getElementById('installIOS').classList.toggle('hidden', !ios);
-      banner.classList.add('show');
-      clearTimeout(autoHide);
-      autoHide = setTimeout(hideBanner, 15000); // auto-dismiss after 15s
-    }
-    function hideBanner() { banner.classList.remove('show'); clearTimeout(autoHide); }
-    function dismissForever() { try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch {} hideBanner(); }
+  function hideBanner() {
+    const banner = document.getElementById('pwa-install-banner');
+    if (banner) banner.classList.remove('visible');
+    clearTimeout(autoDismissTimer);
+  }
 
-    let deferredPrompt = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      showBanner(false);
-    });
+  function dismissBanner() {
+    hideBanner();
+    try { localStorage.setItem('pwa_dismissed_at', String(Date.now())); } catch {}
+  }
 
-    document.getElementById('installAccept').addEventListener('click', async () => {
-      hideBanner();
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        try { await deferredPrompt.userChoice; } catch {}
-        deferredPrompt = null;
-      }
-    });
-    document.getElementById('installDismiss').addEventListener('click', dismissForever);
-    document.getElementById('installDismissIOS').addEventListener('click', dismissForever);
+  async function triggerInstall() {
+    clearTimeout(autoDismissTimer);
+    if (!deferredPrompt) return;
+    hideBanner();
+    deferredPrompt.prompt();
+    try {
+      const choice = await deferredPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') showInstalledBadge();
+    } catch {}
+    deferredPrompt = null;
+    const hb = document.getElementById('header-install-btn'); if (hb) hb.style.display = 'none';
+  }
 
-    window.addEventListener('appinstalled', () => { hideBanner(); showInstalledBadge(); });
+  function showInstalledBadge() {
+    const badge = document.getElementById('installed-badge'); if (badge) badge.style.display = 'inline-flex';
+    const hb = document.getElementById('header-install-btn'); if (hb) hb.style.display = 'none';
+    hideBanner();
+  }
 
-    if (isStandalone) {
-      showInstalledBadge();
-    } else if (isIOS && !dismissedRecently()) {
-      // iOS has no beforeinstallprompt — show the manual instruction after a short delay
-      setTimeout(() => showBanner(true), 2500);
-    }
+  function checkIfAlreadyInstalled() {
+    if (isStandalone || localStorage.getItem('pwa_installed') === 'true') { showInstalledBadge(); return true; }
+    return false;
+  }
+
+  // --- events ---
+  // CASE A — Chrome / Edge / Android
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const hb = document.getElementById('header-install-btn'); if (hb) hb.style.display = 'inline-flex';
+    showInstallBanner('chrome');
+  });
+
+  // CASE C — successful install
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    hideBanner();
+    showInstalledBadge();
+    try { localStorage.setItem('pwa_installed', 'true'); } catch {}
+  });
+
+  // --- init ---
+  (function initPWA() {
+    if (checkIfAlreadyInstalled()) return;       // already installed → badge only
+    if (wasDismissed()) return;                   // dismissed < 7 days ago → stay quiet
+    // CASE B — iOS Safari has no beforeinstallprompt; show manual instructions
+    if (isIOS && isSafari && !isStandalone) setTimeout(() => showInstallBanner('ios'), 2000);
   })();
 
   /* =========================================================================
