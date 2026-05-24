@@ -1,62 +1,79 @@
-/* =============================================================================
-   AI Headshot Prompt Builder — Service Worker
-   Cache-first with runtime caching so the app works fully offline after the
-   first visit (including the Tailwind CDN script and Google Fonts).
-   ============================================================================= */
+/* Mama Reset — Service Worker */
+const VERSION = "mama-reset-v4";
+const CORE_CACHE = VERSION + "-core";
+const RUNTIME_CACHE = VERSION + "-runtime";
 
-const CACHE = 'headshot-builder-v4';
-
-// App shell + manifest + key icons cached up-front on install. Cross-origin CDN
-// assets are cached lazily at runtime (see the fetch handler) to avoid addAll()
-// failing if a CDN request errors.
+// Same-origin files that make up the app shell.
 const CORE_ASSETS = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icons/icon-32.png',
-  './icons/icon-180.png',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/icon-maskable-512.png",
+  "./icons/apple-touch-icon.png",
+  "./icons/favicon-32.png"
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
-      .catch(() => self.skipWaiting())
-  );
+// Pre-cache the app shell. Cache items individually so one failure
+// (e.g. a transient network blip) doesn't abort the whole install.
+self.addEventListener("install", (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CORE_CACHE);
+    await Promise.allSettled(CORE_ASSETS.map((url) => cache.add(url)));
+    self.skipWaiting();
+  })());
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+// Remove caches from older versions.
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k))
+    );
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== 'GET') return;
+  if (req.method !== "GET") return;
 
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
-        .then((res) => {
-          // Runtime-cache successful (and opaque CDN) responses for offline reuse.
-          if (res && (res.ok || res.type === 'opaque')) {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() => {
-          // Offline: fall back to the cached app shell for navigations.
-          if (req.mode === 'navigate') return caches.match('./');
-          return caches.match(req);
-        });
-    })
-  );
+  const url = new URL(req.url);
+
+  // Page navigations: network-first so updates show when online,
+  // fall back to the cached shell when offline.
+  if (req.mode === "navigate") {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req);
+        const cache = await caches.open(CORE_CACHE);
+        cache.put("./index.html", fresh.clone());
+        return fresh;
+      } catch (e) {
+        return (await caches.match("./index.html")) ||
+               (await caches.match("./")) ||
+               Response.error();
+      }
+    })());
+    return;
+  }
+
+  // Everything else (icons, CDN scripts, fonts): stale-while-revalidate.
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    const network = fetch(req).then((res) => {
+      if (res && (res.ok || res.type === "opaque")) {
+        caches.open(RUNTIME_CACHE).then((c) => c.put(req, res.clone()));
+      }
+      return res;
+    }).catch(() => null);
+    return cached || (await network) || Response.error();
+  })());
+});
+
+// Allow the page to trigger an immediate update.
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
