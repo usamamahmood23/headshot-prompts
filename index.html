@@ -399,16 +399,9 @@
   <header class="border-b border-[#e8e8e4] bg-white sticky top-0 z-30">
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
       <div class="flex items-center gap-3">
-        <!-- Camera aperture SVG in light accent square -->
-        <div class="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="M12 3 L12 12 L19.5 16"></path>
-            <path d="M12 12 L4.5 16"></path>
-            <path d="M12 12 L19.5 8"></path>
-            <path d="M12 12 L4.5 8"></path>
-            <path d="M12 12 L12 21"></path>
-          </svg>
+        <!-- App icon (matches the installed/PWA icon) -->
+        <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#e8e8e4]">
+          <img src="./icons/icon-192.png" alt="App icon" class="w-full h-full object-cover" />
         </div>
         <div>
           <h1 class="text-lg sm:text-xl font-bold leading-tight text-[#111111]">AI Headshot Prompt Builder</h1>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'headshot-builder-v1';
+const CACHE_NAME = 'headshot-builder-v2';
 
 const ASSETS = [
   './',
