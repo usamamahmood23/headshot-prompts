@@ -1348,24 +1348,48 @@
   }
 
   function triggerInstall() {
-    if (deferredPrompt) {
-      // Chrome / Edge / Android — native prompt
+    console.log('[PWA] triggerInstall called. deferredPrompt:', deferredPrompt);
+
+    if (deferredPrompt !== null) {
+      // Native install prompt is available — trigger it directly
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function (result) {
-        console.log('[PWA] User choice:', result.outcome);
-        if (result.outcome === 'accepted') {
+
+      deferredPrompt.userChoice.then(function (choiceResult) {
+        console.log('[PWA] User choice:', choiceResult.outcome);
+
+        if (choiceResult.outcome === 'accepted') {
+          console.log('[PWA] User accepted install');
           deferredPrompt = null;
           hideBanner();
+          hideHeaderInstallBtn();
           showInstalledBadge();
+          localStorage.setItem('pwa_installed', 'true');
         } else {
-          // User dismissed native prompt — keep banner closed
+          console.log('[PWA] User dismissed install prompt');
+          // Prompt is consumed — can't use again
+          deferredPrompt = null;
+          // Hide install button since prompt is no longer available
+          hideHeaderInstallBtn();
           hideBanner();
           localStorage.setItem('pwa_dismissed_at', Date.now().toString());
         }
+      }).catch(function (err) {
+        console.log('[PWA] userChoice error:', err);
+        deferredPrompt = null;
+        hideHeaderInstallBtn();
       });
+
     } else {
-      // iOS Safari or any browser without native prompt — show step-by-step modal
-      showIOSInstallModal();
+      // deferredPrompt not available: already installed, unsupported browser,
+      // file:// protocol, or iOS Safari (handled via the step-by-step modal).
+      console.log('[PWA] No install prompt available');
+
+      if (isIOS) {
+        showIOSInstallModal();
+      } else {
+        // Button should not be visible in this state — hide it if it somehow is
+        hideHeaderInstallBtn();
+      }
     }
   }
 
@@ -1420,48 +1444,81 @@
     if (modal) modal.style.display = 'none';
   }
 
+  function showHeaderInstallBtn() {
+    const btn = document.getElementById('header-install-btn');
+    if (btn) { btn.style.display = 'flex'; console.log('[PWA] Header install button shown'); }
+  }
+
+  function hideHeaderInstallBtn() {
+    const btn = document.getElementById('header-install-btn');
+    if (btn) { btn.style.display = 'none'; console.log('[PWA] Header install button hidden'); }
+  }
+
   function showInstalledBadge() {
+    // Hide install button
+    hideHeaderInstallBtn();
+    // Show installed badge
     const badge = document.getElementById('pwa-installed-badge');
-    if (badge) badge.style.display = 'inline-flex';
-    const headerBtn = document.getElementById('header-install-btn');
-    if (headerBtn) headerBtn.style.display = 'none';
+    if (badge) { badge.style.display = 'flex'; console.log('[PWA] Installed badge shown'); }
   }
 
   // --- events ---
+  // Capture beforeinstallprompt as early as possible (this runs at top level of
+  // the script, NOT inside DOMContentLoaded, so the event is never missed).
   window.addEventListener('beforeinstallprompt', function (e) {
-    console.log('[PWA] beforeinstallprompt fired');
     e.preventDefault();
     deferredPrompt = e;
-    const headerBtn = document.getElementById('header-install-btn');
-    if (headerBtn && !isStandalone) headerBtn.style.display = 'flex';
-    if (!wasDismissedRecently() && !bannerShown) setTimeout(function () { showBanner('chrome'); }, 1500);
+    console.log('[PWA] Install prompt captured and ready');
+
+    // Now it is safe to show the install button
+    showHeaderInstallBtn();
+
+    // Show install banner too if not dismissed
+    if (!wasDismissedRecently()) {
+      setTimeout(function () { showBanner('chrome'); }, 1500);
+    }
   });
 
   window.addEventListener('appinstalled', function () {
-    console.log('[PWA] App installed');
+    console.log('[PWA] appinstalled event fired');
     deferredPrompt = null;
     hideBanner();
+    hideHeaderInstallBtn();
     showInstalledBadge();
-    try { localStorage.setItem('pwa_installed', 'true'); } catch (e) {}
+    localStorage.setItem('pwa_installed', 'true');
   });
 
   // --- init ---
   function initPWA() {
-    injectBanner();
-    if (isStandalone) { showInstalledBadge(); return; }
-    registerSW();
-    if (isFileProtocol) { const n = document.getElementById('pwa-file-notice'); if (n) n.style.display = 'block'; }
-    // Persistent install affordance in the header — works on mobile AND laptop,
-    // independent of beforeinstallprompt. Clicking it prompts if available,
-    // otherwise shows manual instructions.
-    const headerBtn = document.getElementById('header-install-btn');
-    if (headerBtn) headerBtn.style.display = 'flex';
-    // Auto-show the banner (mobile bottom-sheet / desktop floating card) unless
-    // recently dismissed. iOS Safari gets the manual "Add to Home Screen" tip.
-    if (!wasDismissedRecently()) {
-      if (isIOS && isSafari) setTimeout(function () { showBanner('ios'); }, 2000);
-      else setTimeout(function () { if (!bannerShown) showBanner('chrome'); }, 2500);
+    const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
+    console.log('[PWA] initPWA — standalone:', isStandalone, 'iOS:', isIOS, 'alreadyInstalled:', alreadyInstalled);
+
+    // If running as an installed app — hide button, show badge, stop
+    if (isStandalone || alreadyInstalled) {
+      hideHeaderInstallBtn();
+      showInstalledBadge();
+      return;
     }
+
+    // Register service worker
+    registerSW();
+
+    // (Web app manifest + PNG icons are static files referenced in <head> —
+    //  no canvas/JS injection needed.)
+    if (isFileProtocol) { const n = document.getElementById('pwa-file-notice'); if (n) n.style.display = 'block'; }
+
+    // iOS Safari never fires beforeinstallprompt → show the install button now
+    if (isIOS) {
+      showHeaderInstallBtn();
+      if (!wasDismissedRecently()) {
+        setTimeout(function () { showBanner('ios'); }, 2000);
+      }
+      return;
+    }
+
+    // Chrome / Edge / Android: the install button stays HIDDEN until
+    // beforeinstallprompt fires — the listener above calls showHeaderInstallBtn().
+    hideHeaderInstallBtn();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPWA);
