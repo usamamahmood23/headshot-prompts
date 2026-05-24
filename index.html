@@ -1387,8 +1387,8 @@
       if (isIOS) {
         showIOSInstallModal();
       } else {
-        // Button should not be visible in this state — hide it if it somehow is
-        hideHeaderInstallBtn();
+        // Desktop / Android with no native prompt yet — show manual steps
+        showManualInstallInstructions();
       }
     }
   }
@@ -1442,6 +1442,19 @@
   function closeIOSModal() {
     const modal = document.getElementById('ios-install-modal');
     if (modal) modal.style.display = 'none';
+  }
+
+  function showManualInstallInstructions() {
+    alert(
+      'To install this app:\n\n' +
+      'Chrome / Edge (desktop):\n' +
+      'Click the install icon in the address bar (or menu ⋮ → "Install app")\n\n' +
+      'Android Chrome:\n' +
+      'Tap menu (⋮) → "Add to Home Screen"\n\n' +
+      'iPhone / iPad Safari:\n' +
+      'Tap Share → "Add to Home Screen"' +
+      (isFileProtocol ? '\n\nNote: install only works when served over a web server or localhost, not from a file:// path.' : '')
+    );
   }
 
   function showHeaderInstallBtn() {
@@ -1507,18 +1520,16 @@
     //  no canvas/JS injection needed.)
     if (isFileProtocol) { const n = document.getElementById('pwa-file-notice'); if (n) n.style.display = 'block'; }
 
-    // iOS Safari never fires beforeinstallprompt → show the install button now
-    if (isIOS) {
-      showHeaderInstallBtn();
-      if (!wasDismissedRecently()) {
-        setTimeout(function () { showBanner('ios'); }, 2000);
-      }
-      return;
-    }
+    // Always show the header install button on laptop AND mobile (independent of
+    // beforeinstallprompt). Clicking it fires the native prompt when available,
+    // otherwise shows manual steps (or the iOS modal on iOS).
+    showHeaderInstallBtn();
 
-    // Chrome / Edge / Android: the install button stays HIDDEN until
-    // beforeinstallprompt fires — the listener above calls showHeaderInstallBtn().
-    hideHeaderInstallBtn();
+    // Auto-show the install banner shortly after load unless recently dismissed.
+    if (!wasDismissedRecently()) {
+      if (isIOS && isSafari) setTimeout(function () { showBanner('ios'); }, 2000);
+      else setTimeout(function () { if (!bannerShown) showBanner('chrome'); }, 2500);
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPWA);
