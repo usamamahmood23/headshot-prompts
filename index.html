@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover" />
   <title>AI Headshot Prompt Builder | Professional AI Photography Prompts</title>
   <meta name="description" content="Configure parameters and generate optimized AI image prompts for realistic professional headshots. Works with Midjourney, Leonardo AI, Adobe Firefly, DALL-E 3 & Stable Diffusion." />
 
@@ -28,12 +28,30 @@
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
   <!-- Apple touch icons -->
-  <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+  <link rel="apple-touch-icon" id="apple-touch-icon" href="./icons/icon-180.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png" />
   <link rel="apple-touch-icon" sizes="167x167" href="./icons/icon-167.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png" />
-  <!-- Web app manifest (static file; relative icon paths resolve against it) -->
-  <link rel="manifest" href="./manifest.webmanifest" />
+  <!-- Web app manifest (REAL static .json file with real PNG icons) -->
+  <link rel="manifest" href="./manifest.json" id="pwa-manifest" />
+
+  <!-- PWA: capture the install prompt as early as possible (FIRST script, before everything) -->
+  <script>
+    window.__pwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.__pwaPrompt = e;
+      window.__pwaPromptReady = true;
+      console.log('[PWA] beforeinstallprompt captured in <head>');
+      document.dispatchEvent(new CustomEvent('pwa:promptready'));
+    });
+    window.addEventListener('appinstalled', function () {
+      window.__pwaPrompt = null;
+      window.__pwaInstalled = true;
+      console.log('[PWA] App installed!');
+      document.dispatchEvent(new CustomEvent('pwa:installed'));
+    });
+  </script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -191,58 +209,37 @@
     .input-focus:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
 
     /* ===== PWA INSTALL BANNER ===== */
-    #pwa-install-banner {
-      position: fixed !important;
-      bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      box-sizing: border-box !important;
-      background: #ffffff !important;
-      border-top: 1px solid #e0e0dc !important;
-      border-radius: 20px 20px 0 0 !important;
-      box-shadow: 0 -8px 32px rgba(0,0,0,0.12) !important;
-      padding: 10px 20px 24px !important;
-      padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
-      z-index: 2147483647 !important;
-      transform: translateY(100%) !important;
-      transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-      overflow: hidden !important;
-      font-family: 'Inter', -apple-system, sans-serif !important;
+    #pwa-banner {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      width: 100%; max-width: 100%; box-sizing: border-box;
+      background: #ffffff; border-top: 1px solid #e0e0dc;
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
+      padding: 20px 24px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      z-index: 9999; display: none;
+      transform: translateY(110%);
+      transition: transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-family: 'Inter', -apple-system, sans-serif;
     }
-    #pwa-install-banner.pwa-visible { transform: translateY(0) !important; }
+    #pwa-banner.pwa-show { transform: translateY(0); }
     /* Desktop: floating card */
     @media (min-width: 600px) {
-      #pwa-install-banner {
-        left: auto !important;
-        right: 20px !important;
-        bottom: 20px !important;
-        width: 340px !important;
-        max-width: 340px !important;
-        border-radius: 20px !important;
-        border: 1px solid #e0e0dc !important;
-        transform: translateY(calc(100% + 40px)) !important;
-      }
-      #pwa-install-banner.pwa-visible { transform: translateY(0) !important; }
+      #pwa-banner { left: auto; right: 24px; bottom: 24px; width: 360px; max-width: 360px; border: 1px solid #e0e0dc; border-radius: 16px; transform: translateY(calc(100% + 40px)); }
+      #pwa-banner.pwa-show { transform: translateY(0); }
     }
-    .pwa-drag-handle { width: 36px; height: 4px; background: #e0e0dc; border-radius: 999px; margin: 0 auto 14px; }
-    @media (min-width: 600px) { .pwa-drag-handle { display: none; } }
-    .pwa-app-row { display: flex !important; align-items: center !important; gap: 12px !important; margin-bottom: 12px !important; width: 100% !important; box-sizing: border-box !important; }
-    .pwa-app-icon { flex-shrink: 0 !important; width: 52px !important; height: 52px !important; border-radius: 14px !important; overflow: hidden !important; background: #2563eb !important; }
-    .pwa-app-icon img { width: 100% !important; height: 100% !important; display: block !important; }
-    .pwa-app-text { flex: 1 !important; min-width: 0 !important; overflow: hidden !important; }
-    .pwa-app-name { font-size: 15px !important; font-weight: 700 !important; color: #111111 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; line-height: 1.3 !important; }
-    .pwa-app-meta { font-size: 12px !important; color: #888888 !important; margin-top: 2px !important; }
-    .pwa-close-btn { flex-shrink: 0 !important; width: 28px !important; height: 28px !important; border-radius: 999px !important; background: #f4f4f2 !important; border: none !important; cursor: pointer !important; font-size: 11px !important; color: #888888 !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 0 !important; line-height: 1 !important; }
-    .pwa-pills { display: flex !important; gap: 6px !important; flex-wrap: wrap !important; margin-bottom: 14px !important; width: 100% !important; box-sizing: border-box !important; }
-    .pwa-pill { background: #f4f4f2 !important; border: 1px solid #e8e8e4 !important; border-radius: 999px !important; padding: 4px 10px !important; font-size: 11px !important; font-weight: 500 !important; color: #555555 !important; white-space: nowrap !important; }
-    #pwa-chrome-actions, #pwa-ios-actions { width: 100% !important; box-sizing: border-box !important; }
-    .pwa-install-btn { display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important; background: #2563eb !important; color: #ffffff !important; border: none !important; border-radius: 12px !important; padding: 14px 16px !important; font-size: 15px !important; font-weight: 700 !important; cursor: pointer !important; margin-bottom: 8px !important; transition: background 150ms ease !important; letter-spacing: -0.01em !important; white-space: nowrap !important; }
-    .pwa-install-btn:hover { background: #1d4ed8 !important; }
-    .pwa-nothanks-btn { width: 100% !important; box-sizing: border-box !important; background: transparent !important; color: #888888 !important; border: 1px solid #e0e0dc !important; border-radius: 12px !important; padding: 11px 16px !important; font-size: 14px !important; font-weight: 500 !important; cursor: pointer !important; transition: all 150ms ease !important; }
-    .pwa-nothanks-btn:hover { background: #f4f4f2 !important; color: #555555 !important; }
-    .pwa-ios-tip { display: flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important; flex-wrap: wrap !important; background: #eff6ff !important; border: 1px solid #bfdbfe !important; border-radius: 10px !important; padding: 12px !important; font-size: 13px !important; color: #1e40af !important; margin-bottom: 10px !important; text-align: center !important; box-sizing: border-box !important; width: 100% !important; }
+    .pwab-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .pwab-icon { flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; overflow: hidden; background: #eff6ff; display: flex; align-items: center; justify-content: center; }
+    .pwab-icon img { width: 100%; height: 100%; display: block; }
+    .pwab-text { flex: 1; min-width: 0; }
+    .pwab-name { font-size: 15px; font-weight: 700; color: #111111; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pwab-sub { font-size: 12px; color: #777777; margin-top: 2px; }
+    .pwab-close { flex-shrink: 0; width: 28px; height: 28px; border-radius: 999px; background: #f4f4f2; border: none; cursor: pointer; font-size: 12px; color: #888888; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+    .pwab-actions { display: flex; gap: 10px; width: 100%; box-sizing: border-box; }
+    #pwab-install-btn { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; background: #2563eb; color: #ffffff; border: none; border-radius: 10px; padding: 14px 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 150ms ease; white-space: nowrap; }
+    #pwab-install-btn:hover { background: #1d4ed8; }
+    #pwab-later-btn { flex-shrink: 0; background: transparent; color: #888888; border: 1px solid #e0e0dc; border-radius: 10px; padding: 14px 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 150ms ease; }
+    #pwab-later-btn:hover { background: #f4f4f2; color: #555555; }
 
     /* ===== HEADER INSTALL BUTTON ===== */
     #header-install-btn {
@@ -280,17 +277,18 @@
     }
 
     /* ===== iOS INSTALL MODAL ===== */
-    #ios-install-modal {
+    #ios-modal {
       position: fixed;
       inset: 0;
       z-index: 2147483647;
-      display: flex;
+      display: none;
       align-items: flex-end;
       justify-content: center;
       font-family: 'Inter', -apple-system, sans-serif;
     }
+    #ios-modal.ios-open { display: flex; }
     @media (min-width: 600px) {
-      #ios-install-modal { align-items: center; }
+      #ios-modal { align-items: center; }
     }
     #ios-modal-backdrop {
       position: absolute;
@@ -378,7 +376,7 @@
       white-space: nowrap;
     }
     .ios-step-divider { width: 1px; height: 14px; background: #e8e8e4; margin: 4px 0 4px 13px; }
-    #ios-modal-done-btn {
+    #ios-done-btn {
       width: 100%;
       background: #2563eb;
       color: #ffffff;
@@ -391,7 +389,7 @@
       transition: background 150ms ease;
       box-sizing: border-box;
     }
-    #ios-modal-done-btn:hover { background: #1d4ed8; }
+    #ios-done-btn:hover { background: #1d4ed8; }
   </style>
 </head>
 
@@ -418,7 +416,7 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button id="header-install-btn" onclick="triggerInstall()">
+        <button id="header-install-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           Install App
         </button>
@@ -1224,316 +1222,186 @@
   })();
 
   /* =========================================================================
-     PWA: service worker + install banner + always-visible install button.
-     Functions are declared at the top level so inline onclick handlers
-     (dismissBanner / triggerInstall) can reach them.
+     PWA: real manifest.json + real sw.js + install banner + iOS modal.
+     Install prompt is captured early in the <head> into window.__pwaPrompt.
      ========================================================================= */
+  (function () {
+    var DISMISSED_KEY = 'pwa_dismissed_at';
+    var INSTALLED_KEY = 'pwa_installed';
+    var DISMISS_MS    = 7 * 24 * 60 * 60 * 1000;
+    var bannerVisible = false;
 
-  let deferredPrompt = null;
-  let bannerShown = false;
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    var isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+    var isFileProtocol = window.location.protocol === 'file:';
+    var alreadyInstalled = localStorage.getItem(INSTALLED_KEY) === 'true';
 
-  // --- environment detection ---
-  const isStandalone =
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true ||
-    document.referrer.includes('android-app://');
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isAndroid = /Android/.test(navigator.userAgent);
-  const isMobile = isIOS || isAndroid;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isFileProtocol = window.location.protocol === 'file:';
-
-  // Dismissed within the last 3 days?
-  function wasDismissedRecently() {
-    const t = localStorage.getItem('pwa_dismissed_at');
-    if (!t) return false;
-    const threeDays = 3 * 24 * 60 * 60 * 1000;
-    return (Date.now() - parseInt(t, 10)) < threeDays;
-  }
-
-  // --- service worker (real same-origin sw.js; blob URLs can't register) ---
-  function registerSW() {
-    if (!('serviceWorker' in navigator)) { console.log('[PWA] SW not supported'); return; }
-    if (location.protocol === 'http:' || location.protocol === 'https:') {
-      navigator.serviceWorker.register('./sw.js', { scope: './' })
-        .then(function (reg) { console.log('[PWA] SW registered. Scope:', reg.scope); })
-        .catch(function (err) { console.log('[PWA] SW registration failed:', err && err.message); });
-    } else {
-      console.log('[PWA] file:// detected — service worker + install require http(s)/localhost.');
-    }
-  }
-
-  // --- build the install banner once and append it as a direct child of <body> ---
-  function injectBanner() {
-    if (document.getElementById('pwa-install-banner')) return;
-    const wrap = document.createElement('div');
-    wrap.innerHTML =
-      '<div id="pwa-install-banner" style="display:none;">' +
-        '<div class="pwa-drag-handle"></div>' +
-        '<div class="pwa-app-row">' +
-          '<div class="pwa-app-icon"><img src="./icons/icon-192.png" alt="App icon" width="52" height="52"></div>' +
-          '<div class="pwa-app-text">' +
-            '<div class="pwa-app-name">AI Headshot Builder</div>' +
-            '<div class="pwa-app-meta">Free · Offline Ready · No Ads</div>' +
-          '</div>' +
-          '<button class="pwa-close-btn" onclick="dismissBanner()" aria-label="Close">✕</button>' +
-        '</div>' +
-        '<div class="pwa-pills">' +
-          '<span class="pwa-pill">⚡ Instant</span>' +
-          '<span class="pwa-pill">📶 Offline</span>' +
-          '<span class="pwa-pill">🏠 Home Screen</span>' +
-        '</div>' +
-        '<div id="pwa-file-notice" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:11px;color:#92400e;margin-bottom:10px;display:none;line-height:1.5;box-sizing:border-box;width:100%;">' +
-          '⚠️ For install to work, open this file via a local server or upload it to any web host (Netlify, GitHub Pages, etc.)' +
-        '</div>' +
-        '<div id="pwa-chrome-actions">' +
-          '<button class="pwa-install-btn" onclick="triggerInstall()">' +
-            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
-            'Install App — It’s Free' +
-          '</button>' +
-          '<button class="pwa-nothanks-btn" onclick="dismissBanner()">Not Now</button>' +
-        '</div>' +
-        '<div id="pwa-ios-actions" style="display:none;">' +
-          '<button class="pwa-install-btn" onclick="triggerInstall()">' +
-            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
-            'Install App — It’s Free' +
-          '</button>' +
-          '<button class="pwa-nothanks-btn" onclick="dismissBanner()">Not Now</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(wrap.firstElementChild);
-  }
-
-  function showBanner(type) {
-    if (isStandalone || wasDismissedRecently()) return;
-    if (bannerShown) return;
-    injectBanner();
-    const banner = document.getElementById('pwa-install-banner');
-    if (!banner) return;
-    bannerShown = true;
-    // keep it a direct child of <body> so no overflow:hidden ancestor can clip it
-    if (banner.parentElement !== document.body) document.body.appendChild(banner);
-
-    const chromeActions = document.getElementById('pwa-chrome-actions');
-    const iosActions = document.getElementById('pwa-ios-actions');
-    if (type === 'ios') {
-      if (chromeActions) chromeActions.style.display = 'none';
-      if (iosActions) iosActions.style.display = 'block';
-    } else {
-      if (chromeActions) chromeActions.style.display = 'block';
-      if (iosActions) iosActions.style.display = 'none';
-    }
-    if (isFileProtocol) {
-      const n = document.getElementById('pwa-file-notice');
-      if (n) n.style.display = 'block';
+    function wasDismissed() {
+      var t = localStorage.getItem(DISMISSED_KEY);
+      if (!t) return false;
+      return (Date.now() - parseInt(t, 10)) < DISMISS_MS;
     }
 
-    banner.style.display = 'block';
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () { banner.classList.add('pwa-visible'); });
-    });
-    // Banner stays visible until the user clicks Install or Not Now (no auto-dismiss).
-  }
-
-  function hideBanner() {
-    const banner = document.getElementById('pwa-install-banner');
-    if (!banner) return;
-    banner.classList.remove('pwa-visible');
-    setTimeout(function () { banner.style.display = 'none'; }, 400);
-  }
-
-  function dismissBanner() {
-    hideBanner();
-    try { localStorage.setItem('pwa_dismissed_at', Date.now().toString()); } catch (e) {}
-  }
-
-  function triggerInstall() {
-    console.log('[PWA] triggerInstall called. deferredPrompt:', deferredPrompt);
-
-    if (deferredPrompt !== null) {
-      // Native install prompt is available — trigger it directly
-      deferredPrompt.prompt();
-
-      deferredPrompt.userChoice.then(function (choiceResult) {
-        console.log('[PWA] User choice:', choiceResult.outcome);
-
-        if (choiceResult.outcome === 'accepted') {
-          console.log('[PWA] User accepted install');
-          deferredPrompt = null;
-          hideBanner();
-          hideHeaderInstallBtn();
-          showInstalledBadge();
-          localStorage.setItem('pwa_installed', 'true');
-        } else {
-          console.log('[PWA] User dismissed install prompt');
-          // Prompt is consumed — can't use again
-          deferredPrompt = null;
-          // Hide install button since prompt is no longer available
-          hideHeaderInstallBtn();
-          hideBanner();
-          localStorage.setItem('pwa_dismissed_at', Date.now().toString());
-        }
-      }).catch(function (err) {
-        console.log('[PWA] userChoice error:', err);
-        deferredPrompt = null;
-        hideHeaderInstallBtn();
+    // ── SERVICE WORKER (real ./sw.js file — never a Blob URL) ──
+    function registerServiceWorker() {
+      if (!('serviceWorker' in navigator)) { console.log('[PWA] SW not supported'); return; }
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(function (r) { console.log('[PWA] SW registered, scope:', r.scope); })
+          .catch(function (err) { console.warn('[PWA] SW failed:', err); });
       });
+    }
 
-    } else {
-      // deferredPrompt not available: already installed, unsupported browser,
-      // file:// protocol, or iOS Safari (handled via the step-by-step modal).
-      console.log('[PWA] No install prompt available');
+    // ── BANNER ──
+    function showBanner() {
+      if (bannerVisible) return;
+      var b = document.getElementById('pwa-banner');
+      if (!b) return;
+      if (b.parentNode !== document.body) document.body.appendChild(b);
+      b.style.display = 'block';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { b.classList.add('pwa-show'); bannerVisible = true; });
+      });
+    }
+    function hideBanner() {
+      var b = document.getElementById('pwa-banner');
+      if (!b) return;
+      b.classList.remove('pwa-show');
+      bannerVisible = false;
+      setTimeout(function () { b.style.display = 'none'; }, 420);
+    }
+    function dismissBanner() {
+      hideBanner();
+      localStorage.setItem(DISMISSED_KEY, Date.now().toString());
+    }
 
-      if (isIOS) {
-        showIOSInstallModal();
-      } else {
-        // Desktop / Android with no native prompt yet — show manual steps
-        showManualInstallInstructions();
+    // ── iOS MODAL ──
+    function showIOSModal() { var m = document.getElementById('ios-modal'); if (m) m.classList.add('ios-open'); }
+    function hideIOSModal() { var m = document.getElementById('ios-modal'); if (m) m.classList.remove('ios-open'); }
+
+    // ── HEADER BUTTON + BADGE ──
+    function showInstallBtn() { var b = document.getElementById('header-install-btn'); if (b) b.style.display = 'flex'; }
+    function hideInstallBtn() { var b = document.getElementById('header-install-btn'); if (b) b.style.display = 'none'; }
+    function showInstalledBadge() {
+      hideInstallBtn();
+      hideBanner();
+      var badge = document.getElementById('pwa-installed-badge');
+      if (badge) badge.style.display = 'flex';
+    }
+
+    // ── FILE:// NOTICE ──
+    function showFileNotice() {
+      var existing = document.getElementById('pwa-file-notice');
+      if (existing) { existing.style.display = 'flex'; return; }
+      var el = document.createElement('div');
+      el.id = 'pwa-file-notice';
+      el.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);font-family:Inter,sans-serif;padding:20px;box-sizing:border-box;';
+      el.innerHTML =
+        '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:380px;width:100%;box-sizing:border-box;">' +
+          '<div style="font-size:18px;font-weight:700;color:#111;margin-bottom:10px;">⚠️ Server Required for Install</div>' +
+          '<p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 20px;">PWA install only works over <strong>https://</strong> or <strong>localhost</strong> — not file://<br><br>Quickest options:<br>• Drag this folder to <strong>netlify.com/drop</strong><br>• Or run <code style="background:#f4f4f2;padding:2px 6px;border-radius:4px;">npx serve .</code> in this folder</p>' +
+          '<button id="pwa-file-notice-close" style="width:100%;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;">Got It</button>' +
+        '</div>';
+      document.body.appendChild(el);
+      document.getElementById('pwa-file-notice-close').addEventListener('click', function () { el.style.display = 'none'; });
+    }
+
+    // ── CORE INSTALL TRIGGER (used by header button AND banner button) ──
+    function triggerInstall() {
+      console.log('[PWA] triggerInstall — prompt:', window.__pwaPrompt);
+
+      // Case 1 — native prompt ready (Chrome / Edge / Android)
+      if (window.__pwaPrompt) {
+        var p = window.__pwaPrompt;
+        window.__pwaPrompt = null;
+        p.prompt();
+        p.userChoice.then(function (result) {
+          console.log('[PWA] Choice:', result.outcome);
+          if (result.outcome === 'accepted') {
+            hideBanner(); hideInstallBtn(); showInstalledBadge();
+            localStorage.setItem(INSTALLED_KEY, 'true');
+          } else {
+            hideBanner(); hideInstallBtn();
+            localStorage.setItem(DISMISSED_KEY, Date.now().toString());
+          }
+        }).catch(function (err) { console.warn('[PWA] userChoice error:', err); });
+        return;
       }
+
+      // Case 2 — iOS Safari (no native prompt → show step-by-step modal)
+      if (isIOS) { hideBanner(); showIOSModal(); return; }
+
+      // Case 3 — file:// protocol
+      if (isFileProtocol) { hideBanner(); showFileNotice(); return; }
+
+      // Case 4 — prompt not available (already dismissed / not eligible)
+      hideBanner(); hideInstallBtn();
+      console.log('[PWA] No prompt available and not iOS');
     }
-  }
 
-  // Build the iOS step-by-step modal once and append it to <body>.
-  function ensureIOSModal() {
-    if (document.getElementById('ios-install-modal')) return;
-    const wrap = document.createElement('div');
-    wrap.innerHTML =
-      '<div id="ios-install-modal" style="display:none;">' +
-        '<div id="ios-modal-backdrop" onclick="closeIOSModal()"></div>' +
-        '<div id="ios-modal-card">' +
-          '<div id="ios-modal-header">' +
-            '<div id="ios-modal-title">Install on iPhone / iPad</div>' +
-            '<button id="ios-modal-close" onclick="closeIOSModal()">✕</button>' +
-          '</div>' +
-          '<div id="ios-modal-steps">' +
-            '<div class="ios-step">' +
-              '<div class="ios-step-num">1</div>' +
-              '<div class="ios-step-text">Tap the ' +
-                '<span class="ios-step-inline-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> ' +
-                '<strong>Share</strong> button at the bottom of your Safari browser</div>' +
-            '</div>' +
-            '<div class="ios-step-divider"></div>' +
-            '<div class="ios-step">' +
-              '<div class="ios-step-num">2</div>' +
-              '<div class="ios-step-text">Scroll down in the share menu and tap ' +
-                '<span class="ios-step-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add to Home Screen</span></div>' +
-            '</div>' +
-            '<div class="ios-step-divider"></div>' +
-            '<div class="ios-step">' +
-              '<div class="ios-step-num">3</div>' +
-              '<div class="ios-step-text">Tap <strong>Add</strong> in the top right corner to confirm installation</div>' +
-            '</div>' +
-          '</div>' +
-          '<button id="ios-modal-done-btn" onclick="closeIOSModal()">Got It</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(wrap.firstElementChild);
-  }
-
-  function showIOSInstallModal() {
-    // Close the banner first
-    hideBanner();
-    // Show modal
-    ensureIOSModal();
-    const modal = document.getElementById('ios-install-modal');
-    if (modal) modal.style.display = 'flex';
-  }
-
-  function closeIOSModal() {
-    const modal = document.getElementById('ios-install-modal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  function showManualInstallInstructions() {
-    alert(
-      'To install this app:\n\n' +
-      'Chrome / Edge (desktop):\n' +
-      'Click the install icon in the address bar (or menu ⋮ → "Install app")\n\n' +
-      'Android Chrome:\n' +
-      'Tap menu (⋮) → "Add to Home Screen"\n\n' +
-      'iPhone / iPad Safari:\n' +
-      'Tap Share → "Add to Home Screen"' +
-      (isFileProtocol ? '\n\nNote: install only works when served over a web server or localhost, not from a file:// path.' : '')
-    );
-  }
-
-  function showHeaderInstallBtn() {
-    const btn = document.getElementById('header-install-btn');
-    if (btn) { btn.style.display = 'flex'; console.log('[PWA] Header install button shown'); }
-  }
-
-  function hideHeaderInstallBtn() {
-    const btn = document.getElementById('header-install-btn');
-    if (btn) { btn.style.display = 'none'; console.log('[PWA] Header install button hidden'); }
-  }
-
-  function showInstalledBadge() {
-    // Hide install button
-    hideHeaderInstallBtn();
-    // Show installed badge
-    const badge = document.getElementById('pwa-installed-badge');
-    if (badge) { badge.style.display = 'flex'; console.log('[PWA] Installed badge shown'); }
-  }
-
-  // --- events ---
-  // Capture beforeinstallprompt as early as possible (this runs at top level of
-  // the script, NOT inside DOMContentLoaded, so the event is never missed).
-  window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
-    deferredPrompt = e;
-    console.log('[PWA] Install prompt captured and ready');
-
-    // Now it is safe to show the install button
-    showHeaderInstallBtn();
-
-    // Show install banner too if not dismissed
-    if (!wasDismissedRecently()) {
-      setTimeout(function () { showBanner('chrome'); }, 1500);
+    // ── BIND BUTTONS (addEventListener, not onclick attributes) ──
+    function bindAll() {
+      function bind(id, fn) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.removeAttribute('onclick');
+        el.addEventListener('click', fn);
+      }
+      bind('header-install-btn', triggerInstall);
+      bind('pwab-install-btn',   triggerInstall);
+      bind('pwab-later-btn',     dismissBanner);
+      bind('pwab-close-btn',     dismissBanner);
+      bind('ios-modal-close',    hideIOSModal);
+      bind('ios-done-btn',       hideIOSModal);
+      bind('ios-modal-backdrop', hideIOSModal);
     }
-  });
 
-  window.addEventListener('appinstalled', function () {
-    console.log('[PWA] appinstalled event fired');
-    deferredPrompt = null;
-    hideBanner();
-    hideHeaderInstallBtn();
-    showInstalledBadge();
-    localStorage.setItem('pwa_installed', 'true');
-  });
-
-  // --- init ---
-  function initPWA() {
-    const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
-    console.log('[PWA] initPWA — standalone:', isStandalone, 'iOS:', isIOS, 'alreadyInstalled:', alreadyInstalled);
-
-    // If running as an installed app — hide button, show badge, stop
-    if (isStandalone || alreadyInstalled) {
-      hideHeaderInstallBtn();
+    // ── EVENT LISTENERS (prompt captured in <head>) ──
+    document.addEventListener('pwa:promptready', function () {
+      console.log('[PWA] pwa:promptready received');
+      showInstallBtn();
+      if (!wasDismissed()) setTimeout(showBanner, 800);
+    });
+    document.addEventListener('pwa:installed', function () {
       showInstalledBadge();
-      return;
+      localStorage.setItem(INSTALLED_KEY, 'true');
+    });
+
+    // ── INIT ──
+    function initPWA() {
+      bindAll();
+
+      if (isStandalone || alreadyInstalled) {
+        console.log('[PWA] Already installed');
+        showInstalledBadge();
+        return;
+      }
+
+      registerServiceWorker();
+
+      // iOS never fires beforeinstallprompt → show button immediately
+      if (isIOS) {
+        showInstallBtn();
+        if (!wasDismissed()) setTimeout(showBanner, 1500);
+        return;
+      }
+
+      // If the prompt was already captured in <head> before init ran
+      if (window.__pwaPrompt) {
+        showInstallBtn();
+        if (!wasDismissed()) setTimeout(showBanner, 800);
+        return;
+      }
+
+      // Otherwise wait for the pwa:promptready event (listener above)
+      console.log('[PWA] Waiting for beforeinstallprompt...');
     }
 
-    // Register service worker
-    registerSW();
-
-    // (Web app manifest + PNG icons are static files referenced in <head> —
-    //  no canvas/JS injection needed.)
-    if (isFileProtocol) { const n = document.getElementById('pwa-file-notice'); if (n) n.style.display = 'block'; }
-
-    // Always show the header install button on laptop AND mobile (independent of
-    // beforeinstallprompt). Clicking it fires the native prompt when available,
-    // otherwise shows manual steps (or the iOS modal on iOS).
-    showHeaderInstallBtn();
-
-    // Auto-show the install banner shortly after load unless recently dismissed.
-    if (!wasDismissedRecently()) {
-      if (isIOS && isSafari) setTimeout(function () { showBanner('ios'); }, 2000);
-      else setTimeout(function () { if (!bannerShown) showBanner('chrome'); }, 2500);
-    }
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPWA);
-  else initPWA();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPWA);
+    else initPWA();
+  })();
 
   /* =========================================================================
      INIT
@@ -1545,5 +1413,58 @@
   refreshSelections();
   updateOutput();
   </script>
+
+  <!-- ============ PWA INSTALL BANNER (last children of <body>) ============ -->
+  <div id="pwa-banner">
+    <div class="pwab-row">
+      <div class="pwab-icon"><img src="./icons/icon-192.png" alt="App icon" width="48" height="48" /></div>
+      <div class="pwab-text">
+        <div class="pwab-name">AI Headshot Prompt Builder</div>
+        <div class="pwab-sub">Free · Works Offline · No Ads</div>
+      </div>
+      <button id="pwab-close-btn" class="pwab-close" aria-label="Close">✕</button>
+    </div>
+    <div class="pwab-actions">
+      <button id="pwab-install-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Install App — It’s Free
+      </button>
+      <button id="pwab-later-btn">Not Now</button>
+    </div>
+  </div>
+
+  <!-- ============ iOS INSTALL MODAL ============ -->
+  <div id="ios-modal">
+    <div id="ios-modal-backdrop"></div>
+    <div id="ios-modal-card">
+      <div id="ios-modal-header">
+        <div id="ios-modal-title">Install on iPhone / iPad</div>
+        <button id="ios-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div id="ios-modal-steps">
+        <div class="ios-step">
+          <div class="ios-step-num">1</div>
+          <div class="ios-step-text">Tap the
+            <span class="ios-step-inline-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>
+            <strong>Share</strong> button at the bottom of Safari
+          </div>
+        </div>
+        <div class="ios-step-divider"></div>
+        <div class="ios-step">
+          <div class="ios-step-num">2</div>
+          <div class="ios-step-text">Scroll down and tap
+            <span class="ios-step-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add to Home Screen</span>
+          </div>
+        </div>
+        <div class="ios-step-divider"></div>
+        <div class="ios-step">
+          <div class="ios-step-num">3</div>
+          <div class="ios-step-text">Tap <strong>Add</strong> in the top right corner to confirm</div>
+        </div>
+      </div>
+      <button id="ios-done-btn">Got It</button>
+    </div>
+  </div>
+
 </body>
 </html>
