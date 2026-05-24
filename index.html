@@ -1186,11 +1186,7 @@ self.addEventListener('fetch', e => {
           <button class="pwa-later-btn" onclick="dismissBanner()">Not Now</button>
         </div>
         <div id="pwa-ios-actions" style="display:none">
-          <div class="pwa-ios-instruction">
-            <span>Tap</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-            <span>then tap <strong>"Add to Home Screen"</strong></span>
-          </div>
+          <div class="pwa-ios-instruction" id="pwa-instruction"></div>
           <button class="pwa-later-btn" onclick="dismissBanner()">Got It</button>
         </div>
       </div>`;
@@ -1205,10 +1201,18 @@ self.addEventListener('fetch', e => {
     // Ensure the banner is a direct child of <body> so no scrollable/overflow:hidden
     // ancestor can clip it or detach it from the fixed viewport.
     if (banner.parentElement !== document.body) document.body.appendChild(banner);
-    const chrome = document.getElementById('pwa-chrome-actions');
-    const ios = document.getElementById('pwa-ios-actions');
-    if (type === 'ios') { chrome.style.display = 'none'; ios.style.display = 'block'; }
-    else { chrome.style.display = 'block'; ios.style.display = 'none'; }
+    const chromeActions = document.getElementById('pwa-chrome-actions');
+    const iosActions = document.getElementById('pwa-ios-actions');
+    const instr = document.getElementById('pwa-instruction');
+    if (type === 'chrome') {
+      chromeActions.style.display = 'block'; iosActions.style.display = 'none';
+    } else {
+      // 'ios' or 'manual' → show add-to-home-screen instructions (no live prompt available)
+      chromeActions.style.display = 'none'; iosActions.style.display = 'block';
+      if (instr) instr.innerHTML = (type === 'ios')
+        ? '<span>Tap</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>then tap <strong>"Add to Home Screen"</strong></span>'
+        : '<span>Open your browser menu</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg><span>then <strong>"Add to Home Screen"</strong></span>';
+    }
     setTimeout(() => banner.classList.add('visible'), 800);
     clearTimeout(autoDismissTimer);
     autoDismissTimer = setTimeout(() => hideBanner(), 20000); // auto-hide after 20s (no dismissal stored)
@@ -1227,7 +1231,7 @@ self.addEventListener('fetch', e => {
 
   async function triggerInstall() {
     clearTimeout(autoDismissTimer);
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) { showInstallBanner(isIOS ? 'ios' : 'manual'); return; }
     hideBanner();
     deferredPrompt.prompt();
     try {
@@ -1271,7 +1275,19 @@ self.addEventListener('fetch', e => {
     if (checkIfAlreadyInstalled()) return;       // already installed → badge only
     if (wasDismissed()) return;                   // dismissed < 7 days ago → stay quiet
     // CASE B — iOS Safari has no beforeinstallprompt; show manual instructions
-    if (isIOS && isSafari && !isStandalone) setTimeout(() => showInstallBanner('ios'), 2000);
+    if (isIOS && isSafari && !isStandalone) { setTimeout(() => showInstallBanner('ios'), 2000); return; }
+    // CASE D — fallback for any mobile/touch context where beforeinstallprompt
+    // never fires (iOS Chrome, in-app browsers, some Android browsers, the preview).
+    // Wait briefly so a real prompt can win, then show the best-fit variant.
+    const mobileLike = window.matchMedia('(max-width: 639px)').matches || window.matchMedia('(pointer: coarse)').matches;
+    if (mobileLike && !isStandalone) {
+      setTimeout(() => {
+        if (isStandalone || wasDismissed()) return;
+        const existing = document.getElementById('pwa-install-banner');
+        if (existing && existing.classList.contains('visible')) return; // already shown via beforeinstallprompt
+        showInstallBanner(deferredPrompt ? 'chrome' : (isIOS ? 'ios' : 'manual'));
+      }, 2500);
+    }
   })();
 
   /* =========================================================================

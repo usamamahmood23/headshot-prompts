@@ -4,7 +4,7 @@
    first visit (including the Tailwind CDN script and Google Fonts).
    ============================================================================= */
 
-const CACHE = 'headshot-builder-v3';
+const CACHE = 'headshot-builder-v4';
 
 // App shell + manifest + key icons cached up-front on install. Cross-origin CDN
 // assets are cached lazily at runtime (see the fetch handler) to avoid addAll()
